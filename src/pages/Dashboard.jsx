@@ -1,20 +1,17 @@
 import CurrentFront from "../components/CurrentFront";
-import MembersPanel from "../components/MembersPanel";
-import FrontHistoryPanel from "../components/FrontHistoryPanel";
+import MembersPanel from "../components/ProfilesPanel";
 import JournalPanel from "../components/JournalPanel";
+import FoldersPanel from "../components/FoldersPanel";
 
-export default function Dashboard(){
+export default function Dashboard({userId}){
 
   return(
     <>
 
     <div className="grid grid-cols-2 gap-6">
-      <div className="col-span-2">
-        <CurrentFront />
-      </div>
+      <CurrentFront />
       <MembersPanel />
-
-      <FrontHistoryPanel />
+      <FoldersPanel />
       <JournalPanel />
 
     </div>

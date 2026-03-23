@@ -1,7 +1,7 @@
-// AppWrapper.jsx
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useIdStore } from "./store/idStore";
+import { Routes, Route } from "react-router-dom";
+import { supabase } from "./lib/supabase"; // ✅ FIX 1
+
 import { useSessionStore } from "./store/sessionStore";
 
 import Dashboard from "./pages/Dashboard";
@@ -9,44 +9,79 @@ import Members from "./pages/Members";
 import Friends from "./pages/Friends";
 import Systems from "./pages/Systems";
 import Auth from "./pages/auth";
+import Folders from "./pages/Folders";
 import Analytics from "./pages/Analytics";
 import SystemJournal from "./pages/SystemJournal";
 import MemberJournal from "./pages/MemberJournal";
-import { getUser } from "./lib/auth";
+import UserSettings from "./pages/User";
+import ImportMembersPage from "./pages/ImportMembersPage"
 
-export default function AppWrapper() {
-  const [user, setUser] = useState(null);
-  const setUserId = useIdStore.getState().setUserId;
+export default function App() {
+  const [userState, setUserState] = useState(null);
+
+  const setUser = useSessionStore((s) => s.setUser);
+  const userId = useSessionStore((s) => s.userId);
   const initSession = useSessionStore((s) => s.initSession);
+  const mode = useSessionStore((s) => s.mode);
 
-  // Load user on mount
   useEffect(() => {
-    async function loadUser() {
-      const u = await getUser();
-      setUser(u);
-      if (u) setUserId(u.id);
-    }
-    loadUser();
-  }, [setUserId]);
+    // 1. Get initial session
+    async function init() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-  // Restore systemId from session/localStorage
+      const user = session?.user || null;
+
+      setUser(user?.id || null);     // ✅ FIX 2
+      setUserState(user);            // ✅ FIX 3
+    }
+
+    init();
+
+    // 2. Listen for auth changes
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        const user = session?.user || null;
+
+        setUser(user?.id || null);   // ✅ FIX 2
+        setUserState(user);          // ✅ FIX 3
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [setUser]);
+
   useEffect(() => {
     initSession();
   }, [initSession]);
 
-  if (user === null) return <div>Loading...</div>;
-  if (!user) return <Auth />;
+  if (userState === null) return <div>Loading...</div>;
+  if (!userState) return <Auth />;
 
   return (
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/members" element={<Members />} />
-        <Route path="/friends" element={<Friends />} />
-        <Route path="/systems" element={<Systems />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/system-journal" element={<SystemJournal />} />
-        <Route path="/member-journal" element={<MemberJournal />} />
-      </Routes>
+    <Routes>
+      {mode === "singlet" ? (
+        <>
+          <Route path="/friends" element={<Friends />} />
+          <Route path="/user" element={<User />} />
+        </>
+      ) : (
+        <>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/members" element={<Members />} />
+          <Route path="/friends" element={<Friends />} />
+          <Route path="/systems" element={<Systems />} />
+          <Route path="/folders" element={<Folders  />} />
+          <Route path="/analytics" element={<Analytics  />} />
+          <Route path="/system-journal" element={<SystemJournal />} />
+          <Route path="/member-journal" element={<MemberJournal  />} />
+          <Route path="/import" element={<ImportMembersPage />} />
+          <Route path="/user" element={<UserSettings />} />
+        </>
+      )}
+    </Routes>
   );
 }

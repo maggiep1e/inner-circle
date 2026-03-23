@@ -7,7 +7,7 @@ import { startFront } from "../api/front";
 export default function SwitchFrontModal({ onClose }) {
   const members = useSystemStore((s) => s.members);
   const systemId = useSessionStore((s) => s.systemId);
-  const updateCurrentFront = useSystemStore((s) => s.updateCurrentFront);
+  const setCurrentFront = useSystemStore((s) => s.setCurrentFront);
 
 
   const [search, setSearch] = useState("");
@@ -19,7 +19,7 @@ export default function SwitchFrontModal({ onClose }) {
   );
 
   const handleSelect = async (member) => {
-    updateCurrentFront(member.id);
+    setCurrentFront(member.id);
     if (systemId) await startFront(member.id, systemId);
     onClose();
   };

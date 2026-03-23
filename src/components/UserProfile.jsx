@@ -1,53 +1,42 @@
-import { useSystemStore } from "../store/systemStore";
-import MemberMarkdown from "./MemberMarkdown";
+import { useSessionStore } from "../store/sessionStore";
 
-export default function MemberProfile({ member = {}, onEdit, onDone }) {
-  const username = member.name?.toLowerCase().replace(/[^a-z0-9]/g, "") || "unknown";
-  const systemFolders = useSystemStore((s) => s.systemFolders || []);
+export default function UserProfile({ userData = {}, onEdit, onDone }) {
+  const profile = useSessionStore((s) => s.profile);
 
-  // Parse member.folders safely
-  const normalizeArray = (value) => {
-    if (!value) return [];
-    if (Array.isArray(value)) return value.filter(Boolean);
-    if (typeof value === "string") {
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) return parsed.filter(Boolean);
-      } catch {}
-      return value.split(",").map((v) => v.trim()).filter(Boolean);
-    }
-    return [];
-  };
+  // Prefer userData fields, fallback to session profile
+  const displayName = userData.displayName || profile.displayName || profile.name || "Unknown";
+  const name = userData.name || profile.name || "Unknown";
+  const username = (userData.username || profile.username || "unknown").toLowerCase().replace(/[^a-z0-9]/g, "");
 
-  // Map member folder IDs to folder names
-  const folderIds = normalizeArray(member.folders);
-  const folders = folderIds
-    .map((id) => systemFolders.find((f) => f.id === id)?.name)
-    .filter(Boolean); // only keep existing folders
-
-  const tags = normalizeArray(member.tags);
+  const avatar = userData.avatar || profile.avatar;
+  const color = userData.color || profile.color || "#888";
+  const plan = userData.plan || profile.plan || "free";
+  const description = userData.description || profile.description || "";
+  
+  const tags = Array.isArray(userData.tags) ? userData.tags.filter(Boolean) : [];
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
       <div className="max-w-2xl w-full mx-4 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden">
+
         {/* Banner */}
-        <div className="h-32 w-full" style={{ backgroundColor: member.color || "#888" }} />
+        <div className="h-32 w-full" style={{ backgroundColor: color }} />
 
         <div className="p-6 relative">
           {/* Avatar */}
           <div className="absolute -top-12 left-6">
-            {member.avatar ? (
+            {avatar ? (
               <img
-                src={member.avatar}
+                src={avatar}
                 className="w-24 h-24 rounded-full border-4 border-white object-cover"
                 alt="avatar"
               />
             ) : (
               <div
+                style={{ backgroundColor: color }}
                 className="w-24 h-24 rounded-full flex items-center justify-center text-3xl text-white border-4 border-white"
-                style={{ backgroundColor: member.color || "#888" }}
               >
-                {member.name?.[0]?.toUpperCase() || "?"}
+                {name?.[0]?.toUpperCase() || "?"}
               </div>
             )}
           </div>
@@ -66,8 +55,15 @@ export default function MemberProfile({ member = {}, onEdit, onDone }) {
 
           {/* Name & username */}
           <div className="mt-12">
-            <h2 className="text-2xl font-bold">{member.displayName || member.name || "Unknown"}</h2>
+            <h2 className="text-2xl font-bold">{displayName}</h2>
             <p className="text-gray-500">@{username}</p>
+          </div>
+
+          {/* Plan */}
+          <div className="mt-2">
+            <span className="text-sm text-gray-700 dark:text-gray-300">
+              Plan: <strong>{plan === "paid" ? "Paid" : "Free"}</strong>
+            </span>
           </div>
 
           {/* Tags */}
@@ -81,21 +77,10 @@ export default function MemberProfile({ member = {}, onEdit, onDone }) {
             </div>
           )}
 
-          {/* Folders */}
-          {folders.length >= 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {folders.map((folder, i) => (
-                <span key={i} className="bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded-full">
-                  📁 {folder}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Bio */}
-          {member.description ? (
+          {/* Description */}
+          {description ? (
             <div className="mt-4">
-              <MemberMarkdown text={member.description} />
+              <p className="whitespace-pre-wrap">{description}</p>
             </div>
           ) : (
             <p className="text-gray-400 mt-4">No description yet.</p>

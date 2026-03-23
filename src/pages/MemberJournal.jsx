@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { useSystemStore } from "../store/systemStore";
 import { createMemberJournal, searchMemberJournal } from "../api/journals";
+import { useSessionStore } from "../store/sessionStore";
 
 import SearchBar from "../components/SearchBar";
 
-export default function MemberJournal() {
+export default function MemberJournal({userId}) {
+    const mode = useSessionStore((s) => s.mode);
+    const profile = useSessionStore((s) => s.profile);
+    const plan = profile?.plan || "free";
 
   const members = useSystemStore((s) => s.members);
 
@@ -46,6 +50,14 @@ export default function MemberJournal() {
     setResults(data);
 
   }
+
+if (mode !== "system") {
+  return <div className="text-gray-400">This feature is for systems only.</div>;
+}
+
+if (plan !== "pro") {
+  return <div className="text-gray-400">This feature is for pro members only.</div>;
+}
 
   return (
 <>

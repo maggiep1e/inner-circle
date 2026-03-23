@@ -5,7 +5,7 @@ import SwitchFrontModal from "./SwitchFrontModal";
 
 export default function CurrentFront() {
   const currentFrontId = useSystemStore((s) => s.currentFront);
-  const members = useSystemStore((s) => s.members);
+  const members = useSystemStore((s) => s.members); // this always tracks current system
   const systemId = useSystemStore((s) => s.systemId);
   const loadMembers = useSystemStore((s) => s.loadMembers);
 
@@ -58,10 +58,9 @@ export default function CurrentFront() {
                     />
                   ) : (
                     <span className="text-2xl font-bold">
-                      {currentMember.name?.[0]?.toUpperCase()}
+                      {currentMember.display_name?[0]?.toUpperCase() : currentMember.name?.[0]?.toUpperCase() || "?"  }
                     </span>
                   )}
-                  <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
                 </div>
                 <span className="text-sm mt-2">
                   {currentMember.display_name || currentMember.name}

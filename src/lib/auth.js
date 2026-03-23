@@ -44,9 +44,9 @@ export async function signOut() {
 }
 
 export async function getUser() {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  const { data } = await supabase.auth.getUser();
-
-  return data.user;
-
+  return session?.user || null;
 }

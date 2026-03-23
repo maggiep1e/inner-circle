@@ -1,56 +1,55 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSystemStore } from "../store/systemStore";
-import { useSessionStore } from "../store/sessionStore";
-import SearchBar from "../components/SearchBar";
 import MemberProfile from "../components/MemberProfile";
 import MemberEditor from "../components/MemberEditor";
+import SearchBar from "../components/SearchBar";
+import { useSessionStore} from "../store/sessionStore"
 
 export default function Members() {
   const members = useSystemStore((s) => s.members);
   const loadMembers = useSystemStore((s) => s.loadMembers);
   const addMember = useSystemStore((s) => s.addMember);
-  const systemId = useSessionStore((s) => s.systemId);
-  const setSystemId = useSystemStore((s) => s.setSystemId);
+  const systemFolders = useSystemStore((s) => s.systemFolders || []);
+  const systemId = useSystemStore((s) => s.systemId);
+  const system = useSystemStore((s) => s.systems.find(sys => sys.id === systemId));
+
+  const mode = useSessionStore((s) => s.mode);
 
   const [selected, setSelected] = useState(null);
-  const [mode, setMode] = useState("view");
+  const [modalMode, setModalMode] = useState("closed");
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newName, setNewName] = useState("");
 
   useEffect(() => {
-    if (systemId) setSystemId(systemId);
-  }, [systemId, setSystemId]);
-
-  useEffect(() => {
     if (!systemId) return;
-    async function load() {
-      setLoading(true);
-      await loadMembers();
-      setLoading(false);
-    }
-    load();
-  }, [systemId, loadMembers]);
+    setLoading(true);
+    loadMembers().finally(() => setLoading(false));
+  }, [systemId]);
 
-  async function handleCreateMember() {
+  const handleCreateMember = async () => {
     if (!newName.trim()) return;
-    try {
-      const newMember = await addMember({ name: newName });
-      setSelected(newMember);
-      setMode("edit");
-      setNewName("");
-      setShowCreateModal(false);
-    } catch (err) {
-      console.error(err);
-    }
-  }
+    const newMember = await addMember({ name: newName, systemId });
+    setSelected(newMember);
+    setModalMode("edit");
+    setNewName("");
+    setShowCreateModal(false);
+  };
+
+  if (mode !== "system") return <div className="text-gray-400">This feature is for systems only.</div>;
 
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <SearchBar />
+        <h1 className="text-xl font-bold">Members</h1>
+        <h2 className="text-sm text-gray-500">{system?.display_name || "No system selected"}</h2>
+      </div>
+
+      <div className="flex gap-4 mb-4"><SearchBar /></div>
+
+      <div className="flex gap-4 mb-4">
         <button
-          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+          className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 disabled:opacity-50"
           onClick={() => setShowCreateModal(true)}
           disabled={!systemId}
         >
@@ -62,33 +61,20 @@ export default function Members() {
         <div>Loading members...</div>
       ) : (
         <div className="flex gap-6">
-          {/* LEFT SIDEBAR */}
           <div className="w-60 space-y-2">
             {members.map((m) => (
-              <div
-                key={m._id || m.id}
-                className="border p-2 rounded bg-gray-50 dark:bg-zinc-800"
-              >
+              <div key={m.id} className="border p-2 rounded bg-gray-50 dark:bg-zinc-800">
                 <div className="font-semibold">{m.displayName || m.name}</div>
-
-                {/* View/Edit buttons under each member */}
                 <div className="flex gap-2 mt-2">
                   <button
-                    onClick={() => {
-                      setSelected(m);
-                      setMode("view");
-                    }}
                     className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm flex-1"
+                    onClick={() => { setSelected(m); setModalMode("view"); }}
                   >
                     View
                   </button>
-
                   <button
-                    onClick={() => {
-                      setSelected(m);
-                      setMode("edit");
-                    }}
                     className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm flex-1"
+                    onClick={() => { setSelected(m); setModalMode("edit"); }}
                   >
                     Edit
                   </button>
@@ -97,34 +83,17 @@ export default function Members() {
             ))}
           </div>
 
-          {/* MAIN CONTENT */}
           <div className="flex-1">
-            {selected ? (
+            {selected && (
               <>
-                {mode === "view" && (
-                  <MemberProfile
-                    member={selected}
-                    onEdit={() => setMode("edit")}
-                    onDone={() => setMode("")}
-                  />
-                )}
-                {mode === "edit" && (
-                  <MemberEditor
-                    member={selected}
-                    onDone={() => setMode("view")}
-                  />
-                )}
+                {modalMode === "view" && <MemberProfile member={selected} onEdit={() => setModalMode("edit")} onDone={() => setModalMode("closed")} />}
+                {modalMode === "edit" && <MemberEditor member={selected} onDone={() => setModalMode("closed")} />}
               </>
-            ) : (
-              <div className="text-gray-400 italic">
-                Select "View" or "Edit" on a member to open
-              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* CREATE MODAL */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-zinc-800 p-6 rounded shadow-lg w-96">
@@ -136,18 +105,8 @@ export default function Members() {
               onChange={(e) => setNewName(e.target.value)}
             />
             <div className="flex justify-end gap-2">
-              <button
-                className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400"
-                onClick={() => setShowCreateModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600"
-                onClick={handleCreateMember}
-              >
-                Create
-              </button>
+              <button className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400" onClick={() => setShowCreateModal(false)}>Cancel</button>
+              <button className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600" onClick={handleCreateMember}>Create</button>
             </div>
           </div>
         </div>

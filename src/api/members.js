@@ -13,6 +13,21 @@ export async function getMembers(systemId) {
   return data;
 }
 
+
+export async function addMemberToFolder(folderId, memberId) {
+  const { data, error } = await supabase
+    .from("folders")
+    .update({
+      member_ids: supabase.raw("array_append(member_ids, ?)", [memberId])
+    })
+    .eq("id", folderId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 // CREATE
 export async function createMember(member) {
 
@@ -45,5 +60,17 @@ export async function updateMember(id, updates) {
 
   if (error) throw error;
 
+  return data;
+}
+
+// Optional: delete a profile
+export async function deleteMember(id) {
+  const { data, error } = await supabase
+    .from("members")
+    .delete()
+    .eq("id", id)
+    .select();
+
+  if (error) throw error;
   return data;
 }

@@ -1,89 +1,120 @@
 import { useEffect, useState } from "react";
-import { useSessionStore } from "./store/sessionStore";
-import { getSystems } from "./api/systems";
-
-import Auth from "./pages/auth";
-import Systems from "./pages/Systems";
-import App from "./App";
-import Sidebar from "./components/Sidebar";
-import TopBar from "./layout/TopBar";
 import { supabase } from "./lib/supabase";
-import Members from "./pages/Members";
+import { getProfiles } from "./api/profiles";
+import { useSessionStore } from "./store/sessionStore";
+
+import Sidebar from "./layout/Sidebar";
+import TopBar from "./layout/TopBar";
+import Auth from "./pages/auth";
+import App from "./App";
+import { useSystemStore } from "./store/systemStore";
 
 export default function AppGate() {
+  const setUser = useSessionStore((s) => s.setUser);
+  const setProfile = useSessionStore((s) => s.setProfile);
+  const setSystems = useSystemStore((s) => s.setSystems);
+  const setCurrentSystem = useSystemStore((s) => s.setCurrentSystem);
 
-  const initSession = useSessionStore(s => s.initSession);
-  const setUser = useSessionStore(s => s.setUser);
-
-  const userId = useSessionStore(s => s.userId);
-  const systemId = useSessionStore(s => s.systemId);
+  const user = useSessionStore((s) => s.user);
+  const profile = useSessionStore((s) => s.profile);
+  const currentSystem = useSystemStore((s) => s.currentSystem);
 
   const [loading, setLoading] = useState(true);
-  const [hasSystems, setHasSystems] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
 
-    async function load() {
+    async function handleSession(session) {
+      if (!mounted) return;
 
       try {
+        const userObj = session?.user;
 
-        console.log("🚀 init session...");
-
-        // ✅ Get user from Supabase
-        const { data } = await supabase.auth.getUser();
-
-        if (data?.user) {
-          setUser(data.user.id);
+        if (!userObj) {
+          setUser(null);
+          setProfile(null);
+          setSystems([]);
+          setCurrentSystem(null);
+          setLoading(false);
+          return;
         }
 
-        await initSession();
+        // 1️⃣ store user object
+        setUser(userObj);
 
-        console.log("👤 user:", data?.user?.id);
+        // 2️⃣ load or create user profile
+        let userProfiles = await getProfiles("user", userObj.id);
 
-        // ✅ Fetch systems
-        const systems = await getSystems();
+        if (userProfiles.length === 0) {
+          const { data: newProfile, error: insertError } = await supabase
+            .from("profiles")
+            .insert([{
+              type: "user",
+              owner_id: userObj.id,
+              display_name: userObj.email,
+              username: userObj.email.split("@")[0],
+              mode: "system" // default
+            }])
+            .select()
+            .single();
 
-        console.log("📦 systems:", systems);
+          if (insertError) throw insertError;
+          userProfiles = [newProfile];
+        }
 
-        setHasSystems(systems.length > 0);
+        setProfile(userProfiles[0]);
+
+        // 3️⃣ load all systems for this user
+        const { data: systemsData, error: systemsError } = await supabase
+          .from("systems")
+          .select("*")
+          .eq("user_id", userObj.id);
+
+        if (systemsError) throw systemsError;
+
+        setSystems(systemsData || []);
+
+        // 4️⃣ set default current system if none
+        if ((systemsData?.length || 0) > 0 && !currentSystem) {
+          setCurrentSystem(systemsData[0]);
+        }
 
       } catch (err) {
-
-        console.error("❌ AppGate error:", err);
-
+        console.error("AppGate error:", err);
       } finally {
-
-        setLoading(false);
-
+        if (mounted) setLoading(false);
       }
-
     }
 
-    load();
+    // 🔹 initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleSession(session);
+    });
 
-  }, []);
+    // 🔹 listen for auth changes
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => handleSession(session)
+    );
 
-  // ----------------------
-  // UI
-  // ----------------------
+    return () => {
+      mounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, [setUser, setProfile, setSystems, setCurrentSystem]);
 
+  // Layout wrapper
   const Layout = ({ children }) => (
     <div className="flex h-screen w-screen bg-white dark:bg-zinc-900 text-black dark:text-white">
       <Sidebar />
       <div className="flex-1 flex flex-col overflow-auto">
         <TopBar />
-        <div className="flex-1 p-6">
-          {children}
-        </div>
+        <div className="flex-1 p-6">{children}</div>
       </div>
     </div>
   );
 
   if (loading) return <div>Loading...</div>;
-
-  if (!userId) return <Layout><Auth /></Layout>;
-
-  if (!hasSystems) return <Layout><Systems /></Layout>;
+  if (!user) return <Layout><Auth /></Layout>;
 
   return <Layout><App /></Layout>;
 }

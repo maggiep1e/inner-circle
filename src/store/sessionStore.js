@@ -1,25 +1,41 @@
+// src/store/sessionStore.js
 import { create } from "zustand";
 
 export const useSessionStore = create((set) => ({
   userId: null,
-  systemId: null, // start as null, will load from localStorage
+  profile: null,
+  mode: "system",
+  systemId: null, 
+  user: null,
+  
+  
+  
+  // currently active system
+  setUser: (userObj) => set({ user: userObj, userId: userObj?.id || null }),
 
-  setUser: (id) => set({ userId: id }),
+
+  setProfile: (profile) =>
+  set({
+    profile,
+    mode: profile?.mode || "system",
+  }),
+
 
   setSystem: (id) => {
-    localStorage.setItem("systemId", id);
+    if (id) localStorage.setItem("systemId", id);
     set({ systemId: id });
   },
 
-  initSession: () => {
-    const savedSystem = localStorage.getItem("systemId");
-    if (savedSystem) {
-      set({ systemId: savedSystem });
-    }
-  },
 
   logout: () => {
     localStorage.removeItem("systemId");
-    set({ userId: null, systemId: null });
+    set({ userId: null, profileId: null, systemId: null });
   },
+
+
+  initSession: () => {
+    const savedSystem = localStorage.getItem("systemId");
+    if (savedSystem) set({ systemId: savedSystem });
+  },
+
 }));

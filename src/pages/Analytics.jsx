@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useIdStore } from "../store/idStore";
 import { getFrontAnalytics } from "../api/analytics";
-import Auth from "./auth";
 
-export default function Analytics() {
+export default function Analytics({userId}) {
 
   const { getToken } = useAuth();
   const systemId = useIdStore((s) => s.systemId);

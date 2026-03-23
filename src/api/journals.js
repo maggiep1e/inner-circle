@@ -3,26 +3,23 @@ import { supabase } from "../lib/supabase";
 // ----------------------
 // CREATE SYSTEM JOURNAL
 // ----------------------
-export async function createSystemJournal(data) {
-
-  const { data: userData } = await supabase.auth.getUser();
-
-  const { data: result, error } = await supabase
+export async function getSystemJournals(systemId) {
+  const { data, error } = await supabase
     .from("journals")
-    .insert([
-      {
-        ...data,
-        user_id: userData.user.id,
-        member_id: null // system journal
-      }
-    ])
-    .select()
-    .single();
-
+    .select("*")
+    .eq("system_id", systemId);
   if (error) throw error;
-
-  return result;
+  return data;
 }
+
+export async function createSystemJournal(entry) {
+  const { data, error } = await supabase.from("journals").insert([entry]);
+  if (error) throw error;
+  return data;
+}
+
+
+
 
 // ----------------------
 // CREATE MEMBER JOURNAL
