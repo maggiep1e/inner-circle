@@ -18,35 +18,39 @@ export default function SystemEditor({ onDone }) {
   if (!currentSystem) return null; // safety
 
   async function handleSave() {
-    if (!user) {
-      alert("User not logged in");
-      return;
-    }
-    if (!currentSystem) {
-      return;
-    }
-    setLoading(true);
-    try {
-      // Update system in Supabas
-
-      updateSystem(updated);
-
-      useSystemStore.setState({
-        systems: systems.map((s) =>
-          s.id === updated.id ? updated : s
-        ),
-      });
-
-      alert("System updated!");
-      onDone();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update system.");
-    } finally {
-      setLoading(false);
-    }
+  if (!user) {
+    alert("User not logged in");
+    return;
   }
+  if (!currentSystem) return;
 
+  setLoading(true);
+
+  const updated = {
+    ...currentSystem,
+    display_name: displayName,
+    avatar,
+    color,
+    description,
+  };
+
+  try {
+    // Update system in your store / backend
+    updateSystem(updated);
+
+    useSystemStore.setState({
+      systems: systems.map((s) => (s.id === updated.id ? updated : s)),
+    });
+
+    alert("System updated!");
+    onDone();
+  } catch (err) {
+    console.error(err);
+    alert("Failed to update system.");
+  } finally {
+    setLoading(false);
+  }
+}
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
       <div className="max-w-md w-full bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-lg">
