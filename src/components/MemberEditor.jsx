@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSystemStore } from "../store/systemStore";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
 export default function MemberEditor({ member = {}, onDone }) {
   const updateMember = useSystemStore((s) => s.updateMember);

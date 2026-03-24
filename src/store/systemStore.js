@@ -1,20 +1,18 @@
 // src/store/systemStore.js
 import { create } from "zustand";
 import { getMembers, createMember, updateMember } from "../api/members";
-import { getFolders, createFolder } from "../api/folders";
 import { getSystems, createSystem } from "../api/systems";
+import { getFoldersBySystem } from "../api/folders";
 import { useSessionStore } from "./sessionStore";
 
 export const useSystemStore = create((set, get) => ({
+  // --- State ---
   systemId: null,
   systems: [],
   members: [],
-  folders: [],
   systemFolders: [],
-  currentFront: null,
-  memberId: null,
+  currentFront: [],
   currentSystem: null,
- 
 
   // --- Setters ---
   setSystemId: (id) => set({ systemId: id }),
@@ -29,22 +27,69 @@ export const useSystemStore = create((set, get) => ({
     if (!system) return;
     set({ currentSystem: system, systemId: system.id });
   },
-  setCurrentFront: (memberId) => set({ currentFront: memberId }),
+  setCurrentFront: (memberIds) => set({ currentFront: memberIds }),
 
-  // --- Load Systems ---
+  // --- Front Management ---
+  setFront: async (memberIds) => {
+    const systemId = get().systemId;
+    if (!systemId) return;
+
+    const { supabase } = await import("../lib/supabase");
+
+    // Insert one row per member
+    const inserts = memberIds.map((id) => ({ system_id: systemId, member_id: id }));
+    const { error } = await supabase.from("front_logs").insert(inserts);
+
+    if (error) {
+      console.error("Failed to set front:", error);
+      return;
+    }
+
+    set({ currentFront: memberIds });
+  },
+
+  toggleFront: async (memberId) => {
+    const current = get().currentFront;
+    const updated = current.includes(memberId)
+      ? current.filter((id) => id !== memberId)
+      : [...current, memberId];
+
+    await get().setFront(updated);
+  },
+
+  loadCurrentFront: async () => {
+    const systemId = get().systemId;
+    if (!systemId) return;
+
+    const { supabase } = await import("../lib/supabase");
+    const { data, error } = await supabase
+      .from("front_logs")
+      .select("member_id")
+      .eq("system_id", systemId);
+
+    if (error) {
+      console.error("Failed to load front:", error);
+      return;
+    }
+
+    set({ currentFront: data.map((f) => f.member_id) });
+  },
+
+  // --- Systems ---
   loadSystems: async () => {
     const { userId, user } = useSessionStore.getState();
     if (!userId) return;
 
     try {
       const data = await getSystems(userId);
-      const filteredData = !user?.plan || user.plan !== "paid" ? data.slice(0, 1) : data;
+      const filtered = !user?.plan || user.plan !== "paid" ? data.slice(0, 1) : data;
 
-      set({ systems: filteredData });
+      set({ systems: filtered });
 
-      if (filteredData.length > 0) {
-        get().setSystemId(filteredData[0].id);
-        set({ currentSystem: filteredData[0] });
+      if (filtered.length > 0) {
+        get().setSystemId(filtered[0].id);
+        set({ currentSystem: filtered[0] });
+        await get().loadCurrentFront();
       } else {
         set({ currentSystem: null });
       }
@@ -54,9 +99,8 @@ export const useSystemStore = create((set, get) => ({
     }
   },
 
-  // --- Create and set a new system ---
   createAndSetSystem: async (name) => {
-    const { data: { user } } = await import("../lib/supabase").then(m =>
+    const { data: { user } } = await import("../lib/supabase").then((m) =>
       m.supabase.auth.getUser()
     );
     if (!user) throw new Error("User not authenticated");
@@ -74,34 +118,24 @@ export const useSystemStore = create((set, get) => ({
     return newSystem;
   },
 
-updateSystem: async (id, updates) => {
-  try {
-    const updated = await updateSystemApi(id, updates); // 👈 rename import (see below)
-
-    set((state) => ({
-      systems: state.systems.map((sys) =>
-        sys.id === id ? updated : sys
-      ),
-      currentSystem:
-        state.currentSystem?.id === id ? updated : state.currentSystem,
-    }));
-
-    return updated;
-  } catch (err) {
-    console.error("Failed to update system:", err);
-    throw err;
-  }
-},
-
+  updateSystem: async (id, updates) => {
+    try {
+      const updated = await updateSystemApi(id, updates); // make sure updateSystemApi is imported
+      set((state) => ({
+        systems: state.systems.map((s) => (s.id === id ? updated : s)),
+        currentSystem: state.currentSystem?.id === id ? updated : state.currentSystem,
+      }));
+      return updated;
+    } catch (err) {
+      console.error("Failed to update system:", err);
+      throw err;
+    }
+  },
 
   // --- Members ---
   loadMembers: async () => {
     const systemId = get().systemId;
-    if (!systemId) {
-      console.warn("No systemId set, skipping loadMembers");
-      set({ members: [] });
-      return [];
-    }
+    if (!systemId) return set({ members: [] });
 
     try {
       const data = await getMembers(systemId);
@@ -128,16 +162,16 @@ updateSystem: async (id, updates) => {
   updateMember: async (id, updates) => {
     const normalizedUpdates = {
       ...updates,
-      folders: Array.isArray(updates.folders) ? updates.folders.map(f => f.trim()).filter(Boolean) : [],
-      tags: Array.isArray(updates.tags) ? updates.tags.map(t => t.trim()).filter(Boolean) : [],
+      folders: Array.isArray(updates.folders) ? updates.folders.map((f) => f.trim()).filter(Boolean) : [],
+      tags: Array.isArray(updates.tags) ? updates.tags.map((t) => t.trim()).filter(Boolean) : [],
     };
 
     const updated = await updateMember(id, normalizedUpdates);
     const normalized = {
       ...updated,
       id: updated._id || updated.id,
-      folders: Array.isArray(updated.folders) ? updated.folders.map(f => (typeof f === "string" ? f : f.name)).filter(Boolean) : [],
-      tags: Array.isArray(updated.tags) ? updated.tags.map(t => (typeof t === "string" ? t : t.name)).filter(Boolean) : [],
+      folders: Array.isArray(updated.folders) ? updated.folders.map((f) => (typeof f === "string" ? f : f.name)).filter(Boolean) : [],
+      tags: Array.isArray(updated.tags) ? updated.tags.map((t) => (typeof t === "string" ? t : t.name)).filter(Boolean) : [],
     };
 
     set((state) => ({
@@ -164,7 +198,6 @@ updateSystem: async (id, updates) => {
   },
 
   updateFolderMembers: (folderId, memberIds) => {
-    // update members in folders locally
     const members = get().members.map((m) => {
       if (memberIds.includes(m.id)) {
         if (!m.folders.includes(folderId)) return { ...m, folders: [...m.folders, folderId] };

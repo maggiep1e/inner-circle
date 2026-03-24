@@ -6,7 +6,7 @@ import SwitchFolderModal from "./SwitchFolderModal";
 import { Link } from "react-router-dom";
 
 export default function FoldersPanel() {
-  const folders = useSystemStore((s) => s.folders);
+  const folders = useSystemStore((s) => s.systemFolders);
   const systemId = useSystemStore((s) => s.systemId);
   const loadFolders = useSystemStore((s) => s.loadFolders);
 
@@ -38,7 +38,7 @@ export default function FoldersPanel() {
             <div>Loading folders...</div>
           ) : (
             <div className="flex gap-2 align-center">
-              {folders.length === 0 ? (
+              {folders.length <= 0 ? (
                 <span className="text-gray-500">No folders yet</span>
               ) : (
                 folders.map((f) => (

@@ -4,32 +4,37 @@ import { useState, useEffect } from "react";
 import SwitchFrontModal from "./SwitchFrontModal";
 
 export default function CurrentFront() {
-  const currentFrontId = useSystemStore((s) => s.currentFront);
   const members = useSystemStore((s) => s.members); // this always tracks current system
   const systemId = useSystemStore((s) => s.systemId);
   const loadMembers = useSystemStore((s) => s.loadMembers);
+const currentFront = useSystemStore((s) => s.currentFront);
+const loadCurrentFront = useSystemStore((s) => s.loadCurrentFront);
 
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const onClose = () => setOpen(false);
-  const currentMember = members.find((m) => m.id === currentFrontId);
+
+  const currentMembers = members.filter((m) =>
+  currentFront.includes(m.id)
+);
 
   // Load members automatically if a system exists
-  useEffect(() => {
-    if (!systemId) {
-      setLoading(false);
-      return;
-    }
+useEffect(() => {
+  if (!systemId) {
+    setLoading(false);
+    return;
+  }
 
-    async function load() {
-      setLoading(true);
-      await loadMembers();
-      setLoading(false);
-    }
+  async function load() {
+    setLoading(true);
+    await loadMembers();
+    await loadCurrentFront(); // 🔥 ADD THIS
+    setLoading(false);
+  }
 
-    load();
-  }, [systemId, loadMembers]);
+  load();
+}, [systemId]);
 
   // Escape key closes modal
   useEffect(() => {
@@ -48,23 +53,29 @@ export default function CurrentFront() {
           <h2 className="font-bold mb-4">CURRENT FRONT:</h2>
 
           <div className="flex gap-6 items-center">
-            {currentMember ? (
-              <div className="flex flex-col items-center">
-                <div className="relative">
-                  {currentMember.avatar ? (
-                    <img
-                      src={currentMember.avatar}
-                      className="w-16 h-16 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-2xl font-bold">
-                      {currentMember.display_name?[0]?.toUpperCase() : currentMember.name?.[0]?.toUpperCase() || "?"  }
+            {currentMembers.length > 0 ? (
+              <div className="flex gap-4 flex-wrap">
+                {currentMembers.map((member) => (
+                  <div key={member.id} className="flex flex-col items-center">
+                    <div className="relative">
+                      {member.avatar ? (
+                        <img
+                          src={member.avatar}
+                          className="w-16 h-16 rounded-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-2xl font-bold">
+                          {member.display_name?.[0]?.toUpperCase() ||
+                            member.name?.[0]?.toUpperCase() ||
+                            "?"}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-sm mt-2">
+                      {member.display_name || member.name}
                     </span>
-                  )}
-                </div>
-                <span className="text-sm mt-2">
-                  {currentMember.display_name || currentMember.name}
-                </span>
+                  </div>
+                ))}
               </div>
             ) : (
               <span className="text-sm text-gray-500">Nobody fronting</span>

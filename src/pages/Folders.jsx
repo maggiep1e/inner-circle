@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { useSystemStore } from "../store/systemStore";
-import { getFolders, getMembersByFolder, createFolder, updateFolder, deleteFolder } from "../api/folders";
 import { useSessionStore } from "../store/sessionStore";
 import { supabase } from "../lib/supabase";
+import { getMembersByFolder, createFolder, deleteFolder } from "../api/folders";
+import AddMemberModal from "../components/AddMemberModal";
 
 export default function Folders() {
   const profile = useSessionStore((s) => s.profile);
   const mode = useSessionStore((s) => s.mode);
-  const systemMembers = useSystemStore((s) => s.members);
-  const systemId = useSystemStore((s) => s.systemId);
 
-  const [folders, setFolders] = useState([]);
+  const systemId = useSystemStore((s) => s.systemId);
+  const systemMembers = useSystemStore((s) => s.members);
+  const folders = useSystemStore((s) => s.systemFolders);
+  const loadFolders = useSystemStore((s) => s.loadFolders);
+
   const [expandedFolderId, setExpandedFolderId] = useState(null);
   const [folderMembers, setFolderMembers] = useState({});
   const [membersLoading, setMembersLoading] = useState(false);
@@ -19,37 +22,17 @@ export default function Folders() {
   const [newFolderName, setNewFolderName] = useState("");
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [selectedFolderForAdd, setSelectedFolderForAdd] = useState(null);
-  const [memberToAdd, setMemberToAdd] = useState("");
 
   if (mode !== "system") return <div className="text-gray-400">This feature is for systems only.</div>;
   if (!profile) return <div>Loading profile...</div>;
 
-  const userId = profile.id;
-
-  
-
-  // Load folders
+  // Load folders on systemId change
   useEffect(() => {
-    if (!userId) return;
-    let mounted = true;
+    if (!systemId) return;
+    loadFolders();
+  }, [systemId, loadFolders]);
 
-    async function load() {
-      const data = await getFolders(userId);
-      if (!mounted) return;
-      setFolders(data);
-
-      // preload first folder members
-      if (data[0]?.id) {
-        const members = await getMembersByFolder(data[0].id);
-        if (!mounted) return;
-        setFolderMembers({ [data[0].id]: members });
-      }
-    }
-
-    load();
-    return () => { mounted = false; };
-  }, [userId]);
-
+  // Toggle folder expansion
   const toggleFolder = async (folderId) => {
     if (expandedFolderId === folderId) return setExpandedFolderId(null);
 
@@ -60,53 +43,48 @@ export default function Folders() {
     setMembersLoading(false);
   };
 
+  // Create new folder
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
-    await createFolder({ name: newFolderName, user_id: userId });
-    const updated = await getFolders(userId);
-    setFolders(updated);
+    await createFolder({ name: newFolderName, system_id: systemId });
+    await loadFolders();
     setShowCreateModal(false);
     setNewFolderName("");
   };
 
+  // Delete folder
   const handleDeleteFolder = async (folderId) => {
     if (!confirm("Are you sure you want to delete this folder?")) return;
     await deleteFolder(folderId);
-    setFolders(folders.filter(f => f.id !== folderId));
+    await loadFolders();
     if (expandedFolderId === folderId) setExpandedFolderId(null);
   };
 
-const handleAddMember = async () => {
-  if (!memberToAdd || !selectedFolderForAdd) return;
+  // Add member to folder
+  const handleAddMember = async (memberId) => {
+    if (!memberId || !selectedFolderForAdd) return;
 
-  const folder = folders.find(f => f.id === selectedFolderForAdd);
+    const folder = folders.find(f => f.id === selectedFolderForAdd);
+    const member = systemMembers.find(m => m.id === memberId);
 
-  // Update member's folders array
-  const member = systemMembers.find(m => m.id === memberToAdd);
-  const updatedFolders = Array.from(new Set([...(member.folders || []), folder.id]));
+    // Update member's folders array
+    const updatedFolders = Array.from(new Set([...(member.folders || []), folder.id]));
+    await supabase
+      .from("members")
+      .update({ folders: updatedFolders })
+      .eq("id", member.id);
 
-  await supabase
-    .from("members")
-    .update({ folders: updatedFolders })
-    .eq("id", member.id);
+    // Refresh folder members
+    const members = await getMembersByFolder(folder.id);
+    setFolderMembers(prev => ({ ...prev, [folder.id]: members }));
 
-  // Update folder.member_ids array (optional, if you use member_ids in folder)
-  const updatedMemberIds = Array.from(new Set([...(folder.member_ids || []), member.id]));
-  await supabase
-    .from("folders")
-    .update({ member_ids: updatedMemberIds })
-    .eq("id", folder.id);
-
-  // Refresh folder members
-  const members = await getMembersByFolder(folder.id);
-  setFolderMembers(prev => ({ ...prev, [folder.id]: members }));
-
-  setShowAddMemberModal(false);
-  setMemberToAdd("");
-};
+    setShowAddMemberModal(false);
+    setSelectedFolderForAdd(null);
+  };
 
   return (
     <div className="flex flex-col gap-4">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Folders</h1>
         <button
@@ -117,6 +95,7 @@ const handleAddMember = async () => {
         </button>
       </div>
 
+      {/* Folder List */}
       {folders.length === 0 ? (
         <div className="text-gray-400 italic">No folders yet</div>
       ) : (
@@ -136,6 +115,7 @@ const handleAddMember = async () => {
                 </button>
               </div>
 
+              {/* Expanded folder members */}
               {expandedFolderId === folder.id && (
                 <div className="mt-2 pl-4 border-l border-gray-300 dark:border-zinc-600 space-y-1">
                   {membersLoading ? (
@@ -184,30 +164,14 @@ const handleAddMember = async () => {
       )}
 
       {/* Add Member Modal */}
-      {showAddMemberModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-zinc-800 p-6 rounded shadow-lg w-96 flex flex-col gap-4">
-            <h2 className="text-xl font-bold">Add Member to Folder</h2>
-            <select
-              className="w-full px-3 py-2 rounded bg-zinc-200 dark:bg-zinc-700"
-              value={memberToAdd}
-              onChange={(e) => setMemberToAdd(e.target.value)}
-            >
-              <option value="">Select member</option>
-              {systemMembers
-                .filter(m => !(folderMembers[selectedFolderForAdd]?.some(fm => fm.id === m.id)))
-                .map((m) => (
-                  <option key={m.id} value={m.id}>{m.displayName || m.name}</option>
-                ))}
-            </select>
-            <div className="flex justify-end gap-2">
-              <button className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400" onClick={() => setShowAddMemberModal(false)}>Cancel</button>
-              <button className="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600" onClick={handleAddMember}>Add</button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <AddMemberModal
+        isOpen={showAddMemberModal}
+        onClose={() => setShowAddMemberModal(false)}
+        folder={folders.find(f => f.id === selectedFolderForAdd)}
+        systemMembers={systemMembers}
+        folderMembers={folderMembers[selectedFolderForAdd] || []}
+        onAdd={handleAddMember}
+      />
     </div>
   );
 }

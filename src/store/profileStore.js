@@ -1,21 +1,23 @@
 import { create } from "zustand";
-import { getProfiles, createProfile, updateProfile } from "../api/profiles";
+import { supabase } from "../lib/supabase";
+import { getProfiles, updateProfile } from "../api/profiles";
 import { useSessionStore } from "./sessionStore";
 
 export const useProfileStore = create((set, get) => ({
-  profileId: null,       // currently active profile
-  profiles: [],          // all loaded profiles
+  profileId: null,
+  profile: null,
+  profiles: [],
+  loading: false,
 
-   loadProfile: async () => {
-    const userId = useSessionStore.getState().userId;
+  // Load the active profile for the logged-in user
+  loadProfile: async () => {
+    const userId = useSessionStore.getState().user?.id;
     if (!userId) return;
-    set({ loading: true });
 
+    set({ loading: true });
     try {
       const profiles = await getProfiles("user", userId);
-      if (profiles.length > 0) {
-        set({ profile: profiles[0] });
-      }
+      if (profiles.length > 0) set({ profile: profiles[0] });
     } catch (err) {
       console.error("Failed to load profile:", err);
     } finally {
@@ -23,15 +25,19 @@ export const useProfileStore = create((set, get) => ({
     }
   },
 
+  // Save profile updates — removes username unless explicitly set via setUsername
   saveProfile: async (updates) => {
-    const userId = useSessionStore.getState().userId;
-    if (!userId) return;
+    const userId = useSessionStore.getState().user?.id;
+    if (!userId) throw new Error("User not logged in");
 
     const profile = get().profile || {};
-    const data = { ...profile, ...updates, owner_id: userId };
+
+    // Only save username if explicitly set
+    const { username: newUsername, ...rest } = updates;
+    const safeProfile = { ...profile, ...rest, owner_id: userId };
 
     try {
-      const saved = await upsertProfile(data);
+      const saved = await updateProfile(safeProfile);
       set({ profile: saved });
       return saved;
     } catch (err) {
@@ -40,20 +46,56 @@ export const useProfileStore = create((set, get) => ({
     }
   },
 
-  addProfile: async (profileData) => {
-    const ownerId = useSessionStore.getState().userId; // <-- use userId
-    if (!ownerId) throw new Error("No user logged in");
-    const newProfile = await createProfile({ ...profileData, owner_id: ownerId });
-    set((state) => ({ profiles: [newProfile, ...state.profiles] }));
-    return newProfile;
+  // Dedicated username update with uniqueness check
+  setUsername: async (newUsername) => {
+    if (!newUsername) throw new Error("Username cannot be empty");
+    const userId = useSessionStore.getState().user?.id;
+    if (!userId) throw new Error("User not logged in");
+
+    // Check if username already exists
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", newUsername)
+      .single();
+
+    if (data) throw new Error("Username already taken");
+
+    const profile = get().profile || {};
+    const saved = await updateProfile({ ...profile, username: newUsername });
+    set({ profile: saved });
+    return saved;
   },
 
-  updateProfile: async (id, updates) => {
-    const updated = await updateProfile(id, updates);
-    set((state) => ({
-      profiles: state.profiles.map((p) => (p.id === id ? updated : p)),
-    }));
-  },
+  // Upload avatar and update profile safely
+  uploadAvatar: async (file) => {
+    const userId = useSessionStore.getState().user?.id;
+    if (!userId) throw new Error("User not logged in");
 
-  setActiveProfile: (id) => set({ profileId: id }),
+    const fileExt = file.name.split(".").pop();
+    const filePath = `avatars/${userId}-${Date.now()}.${fileExt}`;
+
+    // Upload file
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      console.error("Avatar upload error:", uploadError);
+      throw uploadError;
+    }
+
+    // Get public URL
+    const { data: urlData, error: urlError } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(filePath);
+
+    if (urlError) throw urlError;
+    const publicUrl = urlData.publicUrl;
+
+    // Update profile safely (username untouched)
+    await get().saveProfile({ avatar: publicUrl });
+
+    return publicUrl;
+  },
 }));

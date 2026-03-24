@@ -14,17 +14,16 @@ export async function getProfiles(type, ownerId) {
   return data;
 }
 
-// Create or update a profile
 export async function updateProfile(profile) {
   const { data, error } = await supabase
     .from("profiles")
-    .upsert([profile])
+    .upsert([profile]) // profile.avatar should now contain the storage path
     .select()
     .single();
+
   if (error) throw error;
   return data;
 }
-
 // Get a single profile by ID
 export async function getProfile(id) {
   const { data, error } = await supabase
@@ -60,4 +59,16 @@ export async function deleteProfile(id) {
 
   if (error) throw error;
   return data;
+}
+
+export async function uploadAvatar(file, userId) {
+  const filePath = `avatars/${userId}-${file.name}`;
+
+  const { data, error } = await supabase.storage
+    .from("avatars")
+    .upload(filePath, file, { upsert: true });
+
+  if (error) throw error;
+
+  return filePath; // store this path in profiles.avatar
 }

@@ -1,33 +1,60 @@
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 import { useSessionStore } from "../store/sessionStore";
 
-export default function UserProfile({ userData = {}, onEdit, onDone }) {
+export default function UserProfile({ onEdit, onDone }) {
   const profile = useSessionStore((s) => s.profile);
+  const user = useSessionStore((s) => s.user);
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar || null);
 
-  // Prefer userData fields, fallback to session profile
-  const displayName = userData.displayName || profile.displayName || profile.name || "Unknown";
-  const name = userData.name || profile.name || "Unknown";
-  const username = (userData.username || profile.username || "unknown").toLowerCase().replace(/[^a-z0-9]/g, "");
+  // Convert avatar path to public URL if stored
+  useEffect(() => {
+    if (!profile?.avatar) return;
 
-  const avatar = userData.avatar || profile.avatar;
-  const color = userData.color || profile.color || "#888";
-  const plan = userData.plan || profile.plan || "free";
-  const description = userData.description || profile.description || "";
-  
-  const tags = Array.isArray(userData.tags) ? userData.tags.filter(Boolean) : [];
+    const { publicUrl } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(profile.avatar);
+
+    setAvatarUrl(publicUrl);
+  }, [profile]);
+
+  if (!profile) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+        <div className="bg-white dark:bg-zinc-900 p-6 rounded shadow-lg">
+          Loading profile...
+        </div>
+      </div>
+    );
+  }
+
+  const {
+    display_name,
+    name,
+    username,
+    color = "#888",
+    plan = "free",
+    description = "",
+    tags = [],
+    avatar,
+  } = profile;
+
+  const safeUsername = (username || "unknown")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
       <div className="max-w-2xl w-full mx-4 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden">
-
         {/* Banner */}
         <div className="h-32 w-full" style={{ backgroundColor: color }} />
 
         <div className="p-6 relative">
           {/* Avatar */}
           <div className="absolute -top-12 left-6">
-            {avatar ? (
+            {profile.avatar ? (
               <img
-                src={avatar}
+                src={profile.avatar}
                 className="w-24 h-24 rounded-full border-4 border-white object-cover"
                 alt="avatar"
               />
@@ -42,21 +69,21 @@ export default function UserProfile({ userData = {}, onEdit, onDone }) {
           </div>
 
           {/* Edit button */}
-          <div className="flex justify-end">
-            {onEdit && (
+          {onEdit && (
+            <div className="flex justify-end">
               <button
                 onClick={onEdit}
                 className="border px-4 py-1 rounded hover:bg-gray-100 dark:hover:bg-zinc-800"
               >
                 Edit
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* Name & username */}
           <div className="mt-12">
-            <h2 className="text-2xl font-bold">{displayName}</h2>
-            <p className="text-gray-500">@{username}</p>
+            <h2 className="text-2xl font-bold">{display_name || name || "Unknown"}</h2>
+            <p className="text-gray-500">@{safeUsername}</p>
           </div>
 
           {/* Plan */}
@@ -70,7 +97,10 @@ export default function UserProfile({ userData = {}, onEdit, onDone }) {
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {tags.map((tag, i) => (
-                <span key={i} className="bg-purple-200 text-purple-800 text-xs px-2 py-1 rounded-full">
+                <span
+                  key={i}
+                  className="bg-purple-200 text-purple-800 text-xs px-2 py-1 rounded-full"
+                >
                   #{tag}
                 </span>
               ))}
@@ -78,13 +108,13 @@ export default function UserProfile({ userData = {}, onEdit, onDone }) {
           )}
 
           {/* Description */}
-          {description ? (
-            <div className="mt-4">
+          <div className="mt-4">
+            {description ? (
               <p className="whitespace-pre-wrap">{description}</p>
-            </div>
-          ) : (
-            <p className="text-gray-400 mt-4">No description yet.</p>
-          )}
+            ) : (
+              <p className="text-gray-400">No description yet.</p>
+            )}
+          </div>
 
           {/* Close button */}
           {onDone && (
