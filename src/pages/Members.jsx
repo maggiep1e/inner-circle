@@ -1,17 +1,17 @@
-import { useEffect, useState } from "react";
+// Members.jsx
+import { useEffect, useState, useMemo } from "react";
 import { useSystemStore } from "../store/systemStore";
+import { useSessionStore } from "../store/sessionStore";
 import MemberProfile from "../components/MemberProfile";
 import MemberEditor from "../components/MemberEditor";
 import SearchBar from "../components/SearchBar";
-import { useSessionStore} from "../store/sessionStore"
 
 export default function Members() {
   const members = useSystemStore((s) => s.members);
   const loadMembers = useSystemStore((s) => s.loadMembers);
   const addMember = useSystemStore((s) => s.addMember);
-  const systemFolders = useSystemStore((s) => s.systemFolders || []);
   const systemId = useSystemStore((s) => s.systemId);
-  const system = useSystemStore((s) => s.systems.find(sys => sys.id === systemId));
+  const system = useSystemStore((s) => s.systems.find((sys) => sys.id === systemId));
 
   const mode = useSessionStore((s) => s.mode);
 
@@ -20,6 +20,7 @@ export default function Members() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newName, setNewName] = useState("");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     if (!systemId) return;
@@ -36,6 +37,12 @@ export default function Members() {
     setShowCreateModal(false);
   };
 
+  const filteredMembers = useMemo(() => {
+    if (!search.trim()) return members;
+    const term = search.toLowerCase();
+    return members.filter((m) => m.name.toLowerCase().includes(term));
+  }, [members, search]);
+
   if (mode !== "system") return <div className="text-gray-400">This feature is for systems only.</div>;
 
   return (
@@ -45,7 +52,9 @@ export default function Members() {
         <h2 className="text-sm text-gray-500">{system?.display_name || "No system selected"}</h2>
       </div>
 
-      <div className="flex gap-4 mb-4"><SearchBar /></div>
+      <div className="flex gap-4 mb-4">
+        <SearchBar value={search} onChange={(e) => setSearch(e.target.value)} />
+      </div>
 
       <div className="flex gap-4 mb-4">
         <button
@@ -61,9 +70,13 @@ export default function Members() {
         <div>Loading members...</div>
       ) : (
         <div className="flex gap-6">
-          <div className="w-60 space-y-2">
-            {members.map((m) => (
-              <div key={m.id} className="border p-2 rounded bg-gray-50 dark:bg-zinc-800">
+          {/* Member list */}
+          <div className="w-60 max-h-[600px] overflow-auto space-y-2">
+            {filteredMembers.map((m) => (
+              <div
+                key={m.id}
+                className="border p-2 rounded bg-gray-50 dark:bg-zinc-800"
+              >
                 <div className="font-semibold">{m.displayName || m.name}</div>
                 <div className="flex gap-2 mt-2">
                   <button
@@ -83,17 +96,30 @@ export default function Members() {
             ))}
           </div>
 
+          {/* Member detail */}
           <div className="flex-1">
-            {selected && (
+            {selected && modalMode !== "closed" && (
               <>
-                {modalMode === "view" && <MemberProfile member={selected} onEdit={() => setModalMode("edit")} onDone={() => setModalMode("closed")} />}
-                {modalMode === "edit" && <MemberEditor member={selected} onDone={() => setModalMode("closed")} />}
+                {modalMode === "view" && (
+                  <MemberProfile
+                    member={selected}
+                    onEdit={() => setModalMode("edit")}
+                    onDone={() => setModalMode("closed")}
+                  />
+                )}
+                {modalMode === "edit" && (
+                  <MemberEditor
+                    member={selected}
+                    onDone={() => setModalMode("closed")}
+                  />
+                )}
               </>
             )}
           </div>
         </div>
       )}
 
+      {/* Create member modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-zinc-800 p-6 rounded shadow-lg w-96">
@@ -105,8 +131,18 @@ export default function Members() {
               onChange={(e) => setNewName(e.target.value)}
             />
             <div className="flex justify-end gap-2">
-              <button className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400" onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600" onClick={handleCreateMember}>Create</button>
+              <button
+                className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400"
+                onClick={() => setShowCreateModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600"
+                onClick={handleCreateMember}
+              >
+                Create
+              </button>
             </div>
           </div>
         </div>

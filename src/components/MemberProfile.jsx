@@ -1,31 +1,19 @@
-import { useSystemStore } from "../store/systemStore";
+// MemberProfile.jsx
+import { useState } from "react";
 import MemberMarkdown from "./MemberMarkdown";
 
 export default function MemberProfile({ member = {}, onEdit, onDone }) {
+  const [folderSearch, setFolderSearch] = useState("");
   const username = member.name?.toLowerCase().replace(/[^a-z0-9]/g, "") || "unknown";
-  const systemFolders = useSystemStore((s) => s.systemFolders || []);
 
-  // Parse member.folders safely
   const normalizeArray = (value) => {
     if (!value) return [];
     if (Array.isArray(value)) return value.filter(Boolean);
-    if (typeof value === "string") {
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) return parsed.filter(Boolean);
-      } catch {}
-      return value.split(",").map((v) => v.trim()).filter(Boolean);
-    }
-    return [];
+    return value.toString().split(",").map((v) => v.trim()).filter(Boolean);
   };
 
-  // Map member folder IDs to folder names
-  const folderIds = normalizeArray(member.folders);
-  const folders = folderIds
-    .map((id) => systemFolders.find((f) => f.id === id)?.name)
-    .filter(Boolean); // only keep existing folders
-
   const tags = normalizeArray(member.tags);
+  const folders = normalizeArray(member.folders); // directly from member
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
@@ -52,19 +40,18 @@ export default function MemberProfile({ member = {}, onEdit, onDone }) {
             )}
           </div>
 
-          {/* Edit button */}
-          <div className="flex justify-end">
-            {onEdit && (
+          {onEdit && (
+            <div className="flex justify-end">
               <button
                 onClick={onEdit}
                 className="border px-4 py-1 rounded hover:bg-gray-100 dark:hover:bg-zinc-800"
               >
                 Edit
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Name & username */}
+          {/* Name */}
           <div className="mt-12">
             <h2 className="text-2xl font-bold">{member.displayName || member.name || "Unknown"}</h2>
             <p className="text-gray-500">@{username}</p>
@@ -82,7 +69,7 @@ export default function MemberProfile({ member = {}, onEdit, onDone }) {
           )}
 
           {/* Folders */}
-          {folders.length >= 0 && (
+          {folders.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {folders.map((folder, i) => (
                 <span key={i} className="bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded-full">
@@ -101,7 +88,6 @@ export default function MemberProfile({ member = {}, onEdit, onDone }) {
             <p className="text-gray-400 mt-4">No description yet.</p>
           )}
 
-          {/* Close button */}
           {onDone && (
             <div className="mt-6 flex justify-center">
               <button
