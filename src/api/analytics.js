@@ -1,6 +1,5 @@
 import { supabase } from "../lib/supabase";
 
-// GET FRONT TIME ANALYTICS
 export async function getFrontAnalytics(systemId) {
 
   const { data, error } = await supabase
@@ -10,7 +9,6 @@ export async function getFrontAnalytics(systemId) {
 
   if (error) throw error;
 
-  // optional: compute totals per member
   const totals = {};
 
   data.forEach(log => {

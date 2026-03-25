@@ -7,21 +7,18 @@ import FriendEditor from "../components/FriendEditor";
 import { acceptRequest, rejectRequest } from "../api/friends";
 
 export default function Friends({ userId }) {
-  const profile = useSessionStore((s) => s.profile); // current user's profile
-  const mode = useSessionStore((s) => s.mode);
+  const profile = useSessionStore((s) => s.profile);
 
-  // Friends store
   const friends = useFriendsStore((s) => s.friends);
   const requests = useFriendsStore((s) => s.requests);
   const loadFriends = useFriendsStore((s) => s.loadFriends);
   const loadRequests = useFriendsStore((s) => s.loadRequests);
 
   const [selected, setSelected] = useState(null);
-  const [modalMode, setModalMode] = useState("closed"); // "view", "edit", "closed"
+  const [modalMode, setModalMode] = useState("closed"); 
   const [loadingFriends, setLoadingFriends] = useState(true);
   const [loadingRequests, setLoadingRequests] = useState(true);
 
-  // Load friends independently
   useEffect(() => {
     if (!profile?.id) return;
 
@@ -31,7 +28,6 @@ export default function Friends({ userId }) {
       .finally(() => setLoadingFriends(false));
   }, [profile?.id]);
 
-  // Load friend requests independently
   useEffect(() => {
     if (!profile?.id) return;
 
@@ -46,15 +42,11 @@ export default function Friends({ userId }) {
 
   return (
     <div className="flex gap-6">
-      {/* LEFT SIDEBAR */}
       <div className="w-64 space-y-4 overflow-y-auto max-h-screen">
         <div className="flex flex-col mb-4">
           <h1 className="text-xl font-bold">Friends</h1>
         </div>
-
         <SearchBar />
-
-        {/* Incoming Friend Requests */}
         {requests.length > 0 && (
           <div className="p-2 border rounded bg-yellow-50 dark:bg-yellow-900">
             <h3 className="font-semibold mb-2">Friend Requests</h3>
@@ -89,8 +81,6 @@ export default function Friends({ userId }) {
             ))}
           </div>
         )}
-
-        {/* Accepted Friends */}
         <div>
           <h3 className="font-semibold mb-2">Friends</h3>
           {friends.length === 0 ? (
@@ -132,8 +122,6 @@ export default function Friends({ userId }) {
           )}
         </div>
       </div>
-
-      {/* MAIN CONTENT */}
       <div className="flex-1">
         {selected ? (
           <>

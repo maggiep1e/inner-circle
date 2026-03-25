@@ -1,9 +1,5 @@
 import { supabase } from "../lib/supabase";
 
-
-
-// type: "user" | "system"
-// ownerId: supabase user id
 export async function getProfiles(type, ownerId) {
   const { data, error } = await supabase
     .from("profiles")
@@ -17,14 +13,14 @@ export async function getProfiles(type, ownerId) {
 export async function updateProfile(profile) {
   const { data, error } = await supabase
     .from("profiles")
-    .upsert([profile]) // profile.avatar should now contain the storage path
+    .upsert([profile])
     .select()
     .single();
 
   if (error) throw error;
   return data;
 }
-// Get a single profile by ID
+
 export async function getProfile(id) {
   const { data, error } = await supabase
     .from("profiles")
@@ -36,7 +32,6 @@ export async function getProfile(id) {
   return data;
 }
 
-// Create a new profile
 export async function createProfile(profileData) {
   const { data, error } = await supabase
     .from("profiles")
@@ -48,8 +43,6 @@ export async function createProfile(profileData) {
   return data;
 }
 
-
-// Optional: delete a profile
 export async function deleteProfile(id) {
   const { data, error } = await supabase
     .from("profiles")
@@ -70,5 +63,5 @@ export async function uploadAvatar(file, userId) {
 
   if (error) throw error;
 
-  return filePath; // store this path in profiles.avatar
+  return filePath;
 }

@@ -1,4 +1,3 @@
-// src/store/sessionStore.js
 import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 import { getUser } from "../lib/auth";

@@ -39,16 +39,12 @@ export default function SwitchFolderModal({ onClose }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-zinc-800 rounded-2xl p-6 w-[400px] shadow-xl">
         <h2 className="text-lg font-bold mb-4">Folders</h2>
-
-        {/* Search */}
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search folders..."
           className="w-full mb-4 px-3 py-2 rounded bg-zinc-200 dark:bg-zinc-700"
         />
-
-        {/* List */}
         <div className="max-h-60 overflow-y-auto flex flex-col gap-2">
           {filtered.map((folder) => (
             <button
@@ -66,8 +62,6 @@ export default function SwitchFolderModal({ onClose }) {
             <span className="text-sm text-gray-500">No folders found</span>
           )}
         </div>
-
-        {/* New Folder */}
         <div className="mt-4 flex gap-2">
           <input
             value={newFolderName}
@@ -83,8 +77,6 @@ export default function SwitchFolderModal({ onClose }) {
             Add
           </button>
         </div>
-
-        {/* Cancel */}
         <button
           onClick={onClose}
           className="mt-4 text-sm text-gray-500 hover:underline"

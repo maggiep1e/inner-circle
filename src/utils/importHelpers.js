@@ -1,5 +1,3 @@
-// utils/importHelpers.js
-
 import * as XLSX from "xlsx";
 
 // --- Excel / CSV ---

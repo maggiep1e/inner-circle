@@ -10,7 +10,6 @@ export default function FriendProfile({ friend, userId, onEdit, onDone }) {
         <div className="h-32 w-full" style={{ backgroundColor: otherUser.banner || "#888" }} />
 
         <div className="p-6 relative">
-          {/* Avatar */}
           <div className="absolute -top-12 left-6">
             {otherUser.avatar ? (
               <img
@@ -28,7 +27,6 @@ export default function FriendProfile({ friend, userId, onEdit, onDone }) {
             )}
           </div>
 
-          {/* Edit Button */}
           <div className="flex justify-end">
             {onEdit && (
               <button
@@ -40,13 +38,11 @@ export default function FriendProfile({ friend, userId, onEdit, onDone }) {
             )}
           </div>
 
-          {/* Name & Username */}
           <div className="mt-12">
             <h2 className="text-2xl font-bold">{otherUser.display_name || otherUser.username}</h2>
             <p className="text-gray-500">@{username}</p>
           </div>
 
-          {/* Bio */}
           {otherUser.bio ? (
             <div className="mt-4">
               <MemberMarkdown text={otherUser.bio} />
@@ -55,7 +51,6 @@ export default function FriendProfile({ friend, userId, onEdit, onDone }) {
             <p className="text-gray-400 mt-4">No bio yet.</p>
           )}
 
-          {/* Close Button */}
           {onDone && (
             <div className="mt-6 flex justify-center">
               <button

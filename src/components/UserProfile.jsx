@@ -36,7 +36,6 @@ export default function UserProfile({ onEdit, onDone }) {
     plan = "free",
     description = "",
     tags = [],
-    avatar,
   } = profile;
 
   const safeUsername = (username || "unknown")
@@ -46,11 +45,9 @@ export default function UserProfile({ onEdit, onDone }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
       <div className="max-w-2xl w-full mx-4 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden">
-        {/* Banner */}
         <div className="h-32 w-full" style={{ backgroundColor: color }} />
 
         <div className="p-6 relative">
-          {/* Avatar */}
           <div className="absolute -top-12 left-6">
             {profile.avatar ? (
               <img
@@ -67,8 +64,6 @@ export default function UserProfile({ onEdit, onDone }) {
               </div>
             )}
           </div>
-
-          {/* Edit button */}
           {onEdit && (
             <div className="flex justify-end">
               <button
@@ -79,21 +74,16 @@ export default function UserProfile({ onEdit, onDone }) {
               </button>
             </div>
           )}
-
-          {/* Name & username */}
           <div className="mt-12">
             <h2 className="text-2xl font-bold">{display_name || name || "Unknown"}</h2>
             <p className="text-gray-500">@{safeUsername}</p>
           </div>
 
-          {/* Plan */}
           <div className="mt-2">
             <span className="text-sm text-gray-700 dark:text-gray-300">
               Plan: <strong>{plan === "paid" ? "Paid" : "Free"}</strong>
             </span>
           </div>
-
-          {/* Tags */}
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {tags.map((tag, i) => (
@@ -107,7 +97,6 @@ export default function UserProfile({ onEdit, onDone }) {
             </div>
           )}
 
-          {/* Description */}
           <div className="mt-4">
             {description ? (
               <p className="whitespace-pre-wrap">{description}</p>
@@ -115,8 +104,6 @@ export default function UserProfile({ onEdit, onDone }) {
               <p className="text-gray-400">No description yet.</p>
             )}
           </div>
-
-          {/* Close button */}
           {onDone && (
             <div className="mt-6 flex justify-center">
               <button

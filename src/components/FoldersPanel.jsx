@@ -1,4 +1,3 @@
-// src/components/FoldersPanel.jsx
 import Card from "./Card";
 import { useSystemStore } from "../store/systemStore";
 import { useState, useEffect } from "react";

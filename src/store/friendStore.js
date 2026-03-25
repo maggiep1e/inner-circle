@@ -8,12 +8,12 @@ export const useFriendsStore = create((set, get) => ({
   loadingFriends: false,
   loadingRequests: false,
 
-  // Load all accepted friends for a profile
+
   loadFriends: async (profileId) => {
     if (!profileId) return;
     set({ loadingFriends: true });
     try {
-      // Get all accepted friendships where this profile is requester or receiver
+ 
       const { data: friendLinks, error } = await supabase
         .from("friends")
         .select("*")
@@ -21,7 +21,7 @@ export const useFriendsStore = create((set, get) => ({
         .eq("status", "accepted");
       if (error) throw error;
 
-      // Get the IDs of the other profiles
+
       const friendIds = friendLinks.map((f) =>
         f.requester_id === profileId ? f.receiver_id : f.requester_id
       );
@@ -31,7 +31,7 @@ export const useFriendsStore = create((set, get) => ({
         return;
       }
 
-      // Fetch the full profiles
+
       const profilePromises = friendIds.map((id) => getProfiles("user", id));
       const results = await Promise.all(profilePromises);
       const friendsList = results.flat().filter(Boolean);
@@ -44,7 +44,7 @@ export const useFriendsStore = create((set, get) => ({
     }
   },
 
-  // Load pending friend requests for this profile
+
   loadRequests: async (profileId) => {
     if (!profileId) return;
     set({ loadingRequests: true });

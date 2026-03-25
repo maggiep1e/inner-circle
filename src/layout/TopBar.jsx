@@ -12,7 +12,6 @@ export default function TopBar() {
 
   const navigate = useNavigate();
 
-  // Load profile on mount
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
@@ -31,7 +30,6 @@ export default function TopBar() {
           Logout
         </button>
 
-        {/* Avatar clickable */}
         <div className="relative">
           <button
             className="w-18 h-14 rounded-full overflow-hidden border-0 p-0 hover:ring-2 hover:ring-blue-500 transition"
@@ -39,7 +37,7 @@ export default function TopBar() {
           >
             {profile?.avatar ? (
               <img
-                src={profile.avatar} // public URL stored in profile
+                src={profile.avatar}
                 alt="avatar"
                 className="w-full h-full rounded-full object-cover overflow-hidden"
               />

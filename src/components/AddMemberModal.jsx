@@ -12,7 +12,6 @@ export default function AddMemberModal({
   const members = useSystemStore((s) => s.members);
   const loadMembers = useSystemStore((s) => s.loadMembers);
 
-  // Load members when modal opens
   useEffect(() => {
     if (!isOpen) {
       setSelectedMember("");

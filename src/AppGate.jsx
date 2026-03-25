@@ -16,8 +16,6 @@ export default function AppGate() {
   const setSystems = useSystemStore((s) => s.setSystems);
   const setCurrentSystem = useSystemStore((s) => s.setCurrentSystem);
 
-  const loadProfile = useProfileStore((s) => s.loadProfile);
-
   const user = useSessionStore((s) => s.user);
   const currentSystem = useSystemStore((s) => s.currentSystem);
 
@@ -43,7 +41,7 @@ export default function AppGate() {
       setUser(userObj);
 
       try {
-        // 1️⃣ Load existing profile
+ 
         const { data: profiles, error } = await supabase
           .from("profiles")
           .select("*")
@@ -53,14 +51,13 @@ export default function AppGate() {
 
         let profile = profiles?.[0];
 
-        // 2️⃣ Create profile if none exists
+
         if (!profile) {
-          // Default username from email
+  
           let baseUsername = userObj.email.split("@")[0];
           let username = baseUsername;
           let counter = 1;
 
-          // Ensure username uniqueness
           while (true) {
             const { data: existing } = await supabase
               .from("profiles")
@@ -90,7 +87,6 @@ export default function AppGate() {
           profile = newProfile;
         }
 
-        // 3️⃣ Add avatar public URL if exists
         if (profile.avatar) {
           const { data: urlData, error: urlError } = supabase
             .storage
@@ -102,7 +98,6 @@ export default function AppGate() {
 
         setProfile(profile);
 
-        // 4️⃣ Load all systems for this user
         const { data: systemsData, error: systemsError } = await supabase
           .from("systems")
           .select("*")

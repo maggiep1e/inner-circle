@@ -5,7 +5,7 @@ import { useSessionStore } from "../store/sessionStore";
 
 import SearchBar from "../components/SearchBar";
 
-export default function MemberJournal({userId}) {
+export default function MemberJournal() {
     const mode = useSessionStore((s) => s.mode);
     const profile = useSessionStore((s) => s.profile);
     const plan = profile?.plan || "free";
@@ -26,7 +26,6 @@ export default function MemberJournal({userId}) {
 
     const mentions = content.match(/@(\w+)/g)?.map(m => m.slice(1)) || [];
 
-    // Extract [[journal links]]
     const journalLinks = content.match(/\[\[(.*?)\]\]/g)?.map(j => j.slice(2,-2)) || [];
 
     await createMemberJournal({
@@ -67,8 +66,6 @@ if (plan !== "pro") {
       <h1 className="text-2xl font-bold">
         Member Journal
       </h1>
-
-      {/* author select */}
         <SearchBar />
       <select
         value={author}
@@ -83,9 +80,6 @@ if (plan !== "pro") {
           </option>
         ))}
       </select>
-
-
-      {/* tag members */}
 
       <div className="flex gap-2 flex-wrap">
 
@@ -130,9 +124,6 @@ if (plan !== "pro") {
       >
         Save Entry
       </button>
-
-
-      {/* search section */}
 
       <h2 className="font-bold mt-8">
         Search by Member

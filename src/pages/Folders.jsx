@@ -26,13 +26,11 @@ export default function Folders() {
   if (mode !== "system") return <div className="text-gray-400">This feature is for systems only.</div>;
   if (!profile) return <div>Loading profile...</div>;
 
-  // Load folders on systemId change
   useEffect(() => {
     if (!systemId) return;
     loadFolders();
   }, [systemId, loadFolders]);
 
-  // Toggle folder expansion
   const toggleFolder = async (folderId) => {
     if (expandedFolderId === folderId) return setExpandedFolderId(null);
 
@@ -43,7 +41,6 @@ export default function Folders() {
     setMembersLoading(false);
   };
 
-  // Create new folder
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
     await createFolder({ name: newFolderName, system_id: systemId });
@@ -52,7 +49,6 @@ export default function Folders() {
     setNewFolderName("");
   };
 
-  // Delete folder
   const handleDeleteFolder = async (folderId) => {
     if (!confirm("Are you sure you want to delete this folder?")) return;
     await deleteFolder(folderId);
@@ -60,21 +56,18 @@ export default function Folders() {
     if (expandedFolderId === folderId) setExpandedFolderId(null);
   };
 
-  // Add member to folder
   const handleAddMember = async (memberId) => {
     if (!memberId || !selectedFolderForAdd) return;
 
     const folder = folders.find(f => f.id === selectedFolderForAdd);
     const member = systemMembers.find(m => m.id === memberId);
 
-    // Update member's folders array
     const updatedFolders = Array.from(new Set([...(member.folders || []), folder.id]));
     await supabase
       .from("members")
       .update({ folders: updatedFolders })
       .eq("id", member.id);
 
-    // Refresh folder members
     const members = await getMembersByFolder(folder.id);
     setFolderMembers(prev => ({ ...prev, [folder.id]: members }));
 
@@ -84,7 +77,6 @@ export default function Folders() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Folders</h1>
         <button
@@ -95,7 +87,6 @@ export default function Folders() {
         </button>
       </div>
 
-      {/* Folder List */}
       {folders.length === 0 ? (
         <div className="text-gray-400 italic">No folders yet</div>
       ) : (
@@ -115,7 +106,6 @@ export default function Folders() {
                 </button>
               </div>
 
-              {/* Expanded folder members */}
               {expandedFolderId === folder.id && (
                 <div className="mt-2 pl-4 border-l border-gray-300 dark:border-zinc-600 space-y-1">
                   {membersLoading ? (
@@ -143,7 +133,6 @@ export default function Folders() {
         </div>
       )}
 
-      {/* Create Folder Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-zinc-800 p-6 rounded shadow-lg w-96 flex flex-col gap-4">
@@ -163,7 +152,6 @@ export default function Folders() {
         </div>
       )}
 
-      {/* Add Member Modal */}
       <AddMemberModal
         isOpen={showAddMemberModal}
         onClose={() => setShowAddMemberModal(false)}

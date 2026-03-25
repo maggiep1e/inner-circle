@@ -18,11 +18,10 @@ export default function MemberProfile({ member = {}, onEdit, onDone }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
       <div className="max-w-2xl w-full mx-4 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden">
-        {/* Banner */}
+  
         <div className="h-32 w-full" style={{ backgroundColor: member.color || "#888" }} />
 
         <div className="p-6 relative">
-          {/* Avatar */}
           <div className="absolute -top-12 left-6">
             {member.avatar ? (
               <img
@@ -50,14 +49,10 @@ export default function MemberProfile({ member = {}, onEdit, onDone }) {
               </button>
             </div>
           )}
-
-          {/* Name */}
           <div className="mt-12">
             <h2 className="text-2xl font-bold">{member.displayName || member.name || "Unknown"}</h2>
             <p className="text-gray-500">@{username}</p>
           </div>
-
-          {/* Tags */}
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-3">
               {tags.map((tag, i) => (
@@ -67,8 +62,6 @@ export default function MemberProfile({ member = {}, onEdit, onDone }) {
               ))}
             </div>
           )}
-
-          {/* Folders */}
           {folders.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-2">
               {folders.map((folder, i) => (
@@ -78,8 +71,6 @@ export default function MemberProfile({ member = {}, onEdit, onDone }) {
               ))}
             </div>
           )}
-
-          {/* Bio */}
           {member.description ? (
             <div className="mt-4">
               <MemberMarkdown text={member.description} />

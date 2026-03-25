@@ -21,8 +21,6 @@ export default function MemberCreator({ close }) {
         tags,
         folders,
       });
-
-      // Optionally select the new member in the parent component
       close(newMember);
     } catch (err) {
       console.error("Failed to create member:", err);

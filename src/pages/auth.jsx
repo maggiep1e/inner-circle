@@ -7,10 +7,9 @@ import { supabase } from "../lib/supabase";
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [logon, setLogon] = useState("login"); // login | register
+  const [logon, setLogon] = useState("login"); 
   const [error, setError] = useState("");
 
-  // NEW: system vs singlet
   const [mode, setMode] = useState("system");
 
  async function handleSubmit() {
@@ -20,10 +19,7 @@ export default function Auth() {
     if (logon === "login") {
       await signIn(email, password);
     } else {
-      // 1. Create auth user
       await signUp(email, password);
-
-      // 2. Get session safely (REPLACE getUser with this)
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -32,10 +28,8 @@ export default function Auth() {
 
       if (!user) {
         console.log("No session yet (likely email confirmation required)");
-        return; // stop here, profile will be created later
+        return; 
       }
-
-      // 3. Create profile
       await createProfile({
         type: "user",
         owner_id: user.id,
@@ -57,16 +51,12 @@ export default function Auth() {
           <h2 className="font-bold text-center">
             {logon === "login" ? "LOGIN" : "REGISTER"}
           </h2>
-
-          {/* Email */}
           <input
             placeholder="EMAIL"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="border-4 border-black dark:border-zinc-600 rounded-2xl px-3 py-2 bg-white dark:bg-zinc-700"
           />
-
-          {/* Password */}
           <input
             type="password"
             placeholder="PASSWORD"
@@ -74,8 +64,6 @@ export default function Auth() {
             onChange={(e) => setPassword(e.target.value)}
             className="border-4 border-black dark:border-zinc-600 rounded-2xl px-3 py-2 bg-white dark:bg-zinc-700"
           />
-
-          {/* 🆕 Mode selector (ONLY on register) */}
           {logon === "register" && (
             <div className="flex flex-col gap-2">
               <span className="text-sm opacity-70">Account Type</span>
@@ -112,10 +100,8 @@ export default function Auth() {
             </div>
           )}
 
-          {/* Error */}
           {error && <div className="text-red-500 text-sm">{error}</div>}
 
-          {/* Submit */}
           <button
             onClick={handleSubmit}
             className="border-4 border-black dark:border-zinc-600 rounded-2xl py-2 font-bold hover:bg-zinc-200 dark:hover:bg-zinc-700"
@@ -123,7 +109,6 @@ export default function Auth() {
             {logon === "login" ? "LOGIN" : "CREATE ACCOUNT"}
           </button>
 
-          {/* Switch */}
           <button
             onClick={() =>
               setLogon(logon === "login" ? "register" : "login")
@@ -134,7 +119,6 @@ export default function Auth() {
           </button>
         </div>
 
-        {/* OAuth */}
         <div className="flex flex-col gap-2 mt-6">
           <button
             onClick={signInWithGoogle}

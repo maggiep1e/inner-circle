@@ -26,19 +26,17 @@ export default function MemberEditor({ member = {}, onDone }) {
   const [displayName, setDisplayName] = useState(member.displayName || "");
   const [color, setColor] = useState(member.color || "#ffffff");
   const [tags, setTags] = useState(normalizeArray(member.tags));
-  const [folders, setFolders] = useState(normalizeArray(member.folders)); // folder IDs
+  const [folders, setFolders] = useState(normalizeArray(member.folders));
   const [avatar, setAvatar] = useState(member.avatar || "");
   const [folderSearch, setFolderSearch] = useState("");
 
   
 const save = async () => {
-    // Update member’s folders in Supabase
     await supabase
       .from("members")
       .update({ folders })
       .eq("id", member.id);
 
-    // Optionally update folder.member_ids in each folder
     for (const f of folders) {
       const folder = systemFolders.find(x => x.id === f);
       if (!folder) continue;
@@ -49,10 +47,8 @@ const save = async () => {
         .eq("id", f);
     }
 
-    // Update local store
     updateMember(member.id, { name, displayName, color, tags, folders, avatar });
 
-    // Close editor
     onDone();
   };
 
@@ -65,7 +61,6 @@ const save = async () => {
     setFolders(folders.filter((f) => f !== folderId));
   };
 
-  // Filter system folders for autocomplete
   const filteredFolders = systemFolders.filter(
     (f) =>
       f.name.toLowerCase().includes(folderSearch.toLowerCase()) &&
@@ -78,7 +73,6 @@ const save = async () => {
 
         <h2 className="text-xl font-bold">Edit Member</h2>
 
-        {/* Avatar */}
         <input
           type="file"
           accept="image/*"
@@ -121,9 +115,7 @@ const save = async () => {
           className="bg-zinc-700 px-3 py-2 rounded"
         />
 
-        {/* Folder selector */}
         <div className="flex flex-col gap-2">
-          {/* Selected folders */}
           <div className="flex flex-wrap gap-2">
             {folders.map((id) => {
               const folder = systemFolders.find((f) => f.id === id);
@@ -139,8 +131,6 @@ const save = async () => {
               );
             })}
           </div>
-
-          {/* Folder search / add */}
           <div className="flex flex-wrap gap-2">
             {filteredFolders.map((sf) => (
               <button
@@ -160,7 +150,6 @@ const save = async () => {
           </div>
         </div>
 
-        {/* Save / Cancel */}
         <div className="flex gap-2 mt-2">
           <button onClick={save} className="bg-purple-600 px-4 py-2 rounded text-white hover:bg-purple-700">
             Save

@@ -1,9 +1,5 @@
 import { supabase } from "../lib/supabase";
 
-/**
- * Get all folders for a given system.
- * Returns empty array if none or if RLS blocks access.
- */
 export async function getFoldersBySystem(systemId) {
   if (!systemId) return [];
 
@@ -20,9 +16,6 @@ export async function getFoldersBySystem(systemId) {
   return data || [];
 }
 
-/**
- * Create a new folder for a system/user.
- */
 export async function createFolder({ name, user_id, system_id, member_ids = [] }) {
   if (!name || !user_id || !system_id || !member_ids) throw new Error("Missing required fields for folder");
 
@@ -40,10 +33,6 @@ export async function createFolder({ name, user_id, system_id, member_ids = [] }
   return data;
 }
 
-/**
- * Get all members assigned to a specific folder.
- * Assumes members.folders is a uuid[] array.
- */
 export async function getMembersByFolder(folderId) {
   if (!folderId) return [];
 
@@ -60,9 +49,6 @@ export async function getMembersByFolder(folderId) {
   return data || [];
 }
 
-/**
- * Delete a folder by ID.
- */
 export async function deleteFolder(id) {
   if (!id) throw new Error("Folder ID required");
 
@@ -80,9 +66,6 @@ export async function deleteFolder(id) {
   return data || [];
 }
 
-/**
- * Update folder fields (like member_ids or name)
- */
 export async function updateFolder(folderId, updates) {
   if (!folderId || !updates) throw new Error("Folder ID and updates required");
 

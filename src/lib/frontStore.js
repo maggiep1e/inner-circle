@@ -1,6 +1,5 @@
 import { supabase } from "./supabase";
 
-// Returns the active front member for a given system
 export async function getCurrentFront(systemId) {
   if (!systemId) return null;
 
@@ -16,5 +15,5 @@ export async function getCurrentFront(systemId) {
     return null;
   }
 
-  return data; // object with member_id etc.
+  return data;
 }

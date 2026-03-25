@@ -24,7 +24,6 @@ export default function Systems() {
 
   const isPaid = user?.plan === "paid";
 
-  // --- Create new system ---
   const handleCreateSystem = async () => {
     if (!user) return;
     if (!isPaid && systems.length >= 1) {
@@ -43,21 +42,19 @@ export default function Systems() {
     }
   };
 
-  // --- Open modal locally without touching global store ---
+
   const handleOpenModal = (sys, mode) => {
     setModalSystem(sys);
     setModalMode(mode);
   };
 
-  // --- Close modal ---
+
   const handleCloseModal = () => {
     setModalMode("closed");
     setModalSystem(null);
   };
 
-  // --- Save edits globally ---
   const handleSaveSystem = (updated) => {
-    // Update global store only when saving
     setCurrentSystem(updated);
     setModalMode("closed");
     setModalSystem(null);
@@ -65,7 +62,6 @@ export default function Systems() {
 
   return (
     <div className="flex gap-6">
-      {/* Sidebar */}
       <div className="w-60 space-y-2">
         <h2 className="text-xl font-bold">Your System{isPaid ? "s" : ""}</h2>
 
@@ -108,7 +104,6 @@ export default function Systems() {
         </button>
       </div>
 
-      {/* Main content / Modal */}
       <div className="flex-1">
         {modalMode !== "closed" && modalSystem && (
           modalMode === "view" ? (
@@ -121,7 +116,7 @@ export default function Systems() {
             <SystemEditor
               system={modalSystem}
               onDone={handleCloseModal}
-              onSave={handleSaveSystem} // pass save callback
+              onSave={handleSaveSystem} 
             />
           )
         )}

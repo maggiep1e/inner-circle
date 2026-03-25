@@ -1,7 +1,5 @@
-// src/api/fronts.js
 import { supabase } from "../lib/supabase";
 
-// Get all current fronters for a system
 export async function getFronts(systemId) {
   const { data, error } = await supabase
     .from("front_logs")
@@ -16,9 +14,7 @@ export async function getFronts(systemId) {
   return data.map((f) => f.member_id);
 }
 
-// Replace entire front
 export async function setFronts(systemId, memberIds) {
-  // remove old
   const { error: deleteError } = await supabase
     .from("front_logs")
     .delete()
@@ -29,7 +25,6 @@ export async function setFronts(systemId, memberIds) {
     throw deleteError;
   }
 
-  // insert new
   if (!memberIds.length) return [];
 
   const inserts = memberIds.map((id) => ({
@@ -49,7 +44,6 @@ export async function setFronts(systemId, memberIds) {
   return memberIds;
 }
 
-// Toggle a single member
 export async function toggleFront(systemId, memberId, currentFront) {
   let updated;
 

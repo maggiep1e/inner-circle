@@ -74,11 +74,9 @@ export default function ProfileSettings() {
 
   return (
     <div className="max-w-2xl mx-auto my-6 bg-white dark:bg-zinc-900 rounded-xl shadow-2xl overflow-hidden">
-      {/* Banner */}
       <div className="h-32 w-full" style={{ backgroundColor: banner }} />
 
       <div className="p-6 relative">
-        {/* Avatar */}
         <div className="absolute -top-12 left-6">
           {avatar ? (
             <img
@@ -95,8 +93,6 @@ export default function ProfileSettings() {
             </div>
           )}
         </div>
-
-        {/* Name & Username */}
         <div className="mt-12">
           <label className="block text-gray-500 text-sm">Display Name</label>
           <input
@@ -112,8 +108,6 @@ export default function ProfileSettings() {
             onChange={(e) => setUsername(e.target.value)}
           />
         </div>
-
-        {/* Avatar */}
         <div className="mt-2">
           <label className="block text-gray-500 text-sm">Avatar URL</label>
           <input
@@ -122,8 +116,6 @@ export default function ProfileSettings() {
             onChange={(e) => setAvatar(e.target.value)}
           />
         </div>
-
-        {/* Banner */}
         <div className="mt-2">
           <label className="block text-gray-500 text-sm">Banner Color</label>
           <input
@@ -133,8 +125,6 @@ export default function ProfileSettings() {
             onChange={(e) => setBanner(e.target.value)}
           />
         </div>
-
-        {/* Bio */}
         <div className="mt-2">
           <label className="block text-gray-500 text-sm">Bio</label>
           <textarea
@@ -148,8 +138,6 @@ export default function ProfileSettings() {
             <MemberMarkdown text={bio} />
           </div>
         </div>
-
-        {/* Save Button */}
         <div className="mt-6 flex justify-center">
           <button
             onClick={handleSave}

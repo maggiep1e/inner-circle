@@ -90,7 +90,6 @@ export default function ImportMembersPage() {
     <div className="max-w-2xl mx-auto p-6 space-y-6">
       <h1 className="text-2xl font-bold">Import Members</h1>
 
-      {/* Source Selector */}
       <div className="flex flex-col gap-2">
         <label>Choose Source:</label>
         <select
@@ -106,7 +105,6 @@ export default function ImportMembersPage() {
         </select>
       </div>
 
-      {/* Excel Upload */}
       {source === "excel" && (
         <div className="flex flex-col gap-2">
           <label>Upload Excel/CSV File:</label>
@@ -114,7 +112,6 @@ export default function ImportMembersPage() {
         </div>
       )}
 
-      {/* API Key input */}
       {(source === "pluralkit" || source === "simplyplural" || source === "octocon") && (
         <div className="flex flex-col gap-2">
           <label>API Key / Token:</label>
@@ -140,7 +137,6 @@ export default function ImportMembersPage() {
         {loading ? "Importing..." : "Import Members"}
       </button>
 
-      {/* Progress Bar */}
       {loading && progress.total > 0 && (
         <div className="mt-4">
           <div className="w-full bg-gray-300 rounded h-4 overflow-hidden">
@@ -153,7 +149,6 @@ export default function ImportMembersPage() {
         </div>
       )}
 
-      {/* Imported Members */}
       {importedMembers.length > 0 && (
         <div className="mt-4">
           <h2 className="font-semibold">Added Members:</h2>
@@ -165,7 +160,6 @@ export default function ImportMembersPage() {
         </div>
       )}
 
-      {/* Skipped Members */}
       {skippedMembers.length > 0 && (
         <div className="mt-4 text-yellow-600">
           <h2 className="font-semibold">Skipped Duplicates:</h2>

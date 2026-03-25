@@ -18,9 +18,6 @@ export default function App() {
   const user = useSessionStore((s) => s.user);
   const mode = useSessionStore((s) => s.mode);
 
-  // ❌ No Supabase auth calls here! AppGate handles auth
-  // ❌ No getSession, no onAuthStateChange
-
   if (user === null) return <div>Loading...</div>;
   if (!user) return <Auth />;
 

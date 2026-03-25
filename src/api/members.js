@@ -1,6 +1,5 @@
 import { supabase } from "../lib/supabase";
 
-// GET members for selected system
 export async function getMembers(systemId) {
   const { data, error } = await supabase
     .from("members")
@@ -12,7 +11,6 @@ export async function getMembers(systemId) {
 
   return data;
 }
-
 
 export async function addMemberToFolder(folderId, memberId) {
   const { data, error } = await supabase
@@ -28,7 +26,6 @@ export async function addMemberToFolder(folderId, memberId) {
   return data;
 }
 
-// CREATE
 export async function createMember(member) {
 
   const { data: userData } = await supabase.auth.getUser();
@@ -49,7 +46,6 @@ export async function createMember(member) {
   return data;
 }
 
-// UPDATE
 export async function updateMember(id, updates) {
   const { data, error } = await supabase
     .from("members")
@@ -63,7 +59,6 @@ export async function updateMember(id, updates) {
   return data;
 }
 
-// Optional: delete a profile
 export async function deleteMember(id) {
   const { data, error } = await supabase
     .from("members")

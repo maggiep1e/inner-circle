@@ -1,8 +1,5 @@
 import { supabase } from "../lib/supabase";
 
-// ----------------------
-// CREATE SYSTEM JOURNAL
-// ----------------------
 export async function getSystemJournals(systemId) {
   const { data, error } = await supabase
     .from("journals")
@@ -18,12 +15,6 @@ export async function createSystemJournal(entry) {
   return data;
 }
 
-
-
-
-// ----------------------
-// CREATE MEMBER JOURNAL
-// ----------------------
 export async function createMemberJournal(data) {
 
   const { data: userData } = await supabase.auth.getUser();
@@ -44,9 +35,6 @@ export async function createMemberJournal(data) {
   return result;
 }
 
-// ----------------------
-// SEARCH MEMBER JOURNALS
-// ----------------------
 export async function searchMemberJournal(memberId) {
 
   const { data, error } = await supabase

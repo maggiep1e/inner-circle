@@ -70,7 +70,6 @@ export default function Members() {
         <div>Loading members...</div>
       ) : (
         <div className="flex gap-6">
-          {/* Member list */}
           <div className="w-60 max-h-[600px] overflow-auto space-y-2">
             {filteredMembers.map((m) => (
               <div
@@ -96,9 +95,8 @@ export default function Members() {
             ))}
           </div>
 
-          {/* Member detail */}
           <div className="flex-1">
-            {selected && modalMode !== "closed" && (
+            {selected && (
               <>
                 {modalMode === "view" && (
                   <MemberProfile
@@ -119,7 +117,6 @@ export default function Members() {
         </div>
       )}
 
-      {/* Create member modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-zinc-800 p-6 rounded shadow-lg w-96">

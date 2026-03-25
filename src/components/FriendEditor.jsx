@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { updateFriendNote, removeFriend } from "../api/friends"; // implement these in backend
+import { updateFriendNote, removeFriend } from "../api/friends";
 
 export default function FriendEditor({ friend, userId, onDone }) {
   const [note, setNote] = useState(friend.note || "");
@@ -7,7 +7,6 @@ export default function FriendEditor({ friend, userId, onDone }) {
 
   const otherUser = friend.requester.id === userId ? friend.receiver : friend.requester;
 
-  // Save note
   async function saveNote() {
     setLoading(true);
     try {
@@ -21,7 +20,6 @@ export default function FriendEditor({ friend, userId, onDone }) {
     setLoading(false);
   }
 
-  // Remove friend
   async function handleRemove() {
     if (!confirm(`Remove ${otherUser.username} from your friends?`)) return;
     setLoading(true);

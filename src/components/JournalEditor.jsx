@@ -1,9 +1,5 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-
-import { MemberMention } from "./extensions/memberMention";
-import { JournalMention } from "./extensions/journalMention";
-
 import { useSystemStore } from "../../store/systemStore";
 
 export default function JournalEditor({ value, onChange }) {
@@ -13,9 +9,7 @@ export default function JournalEditor({ value, onChange }) {
   const editor = useEditor({
 
     extensions: [
-      StarterKit,
-      MemberMention,
-      JournalMention
+      StarterKit
     ],
 
     content: value,

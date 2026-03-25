@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import SwitchFrontModal from "./SwitchFrontModal";
 
 export default function CurrentFront() {
-  const members = useSystemStore((s) => s.members); // this always tracks current system
+  const members = useSystemStore((s) => s.members);
   const systemId = useSystemStore((s) => s.systemId);
   const loadMembers = useSystemStore((s) => s.loadMembers);
 const currentFront = useSystemStore((s) => s.currentFront);
@@ -19,7 +19,6 @@ const loadCurrentFront = useSystemStore((s) => s.loadCurrentFront);
   currentFront.includes(m.id)
 );
 
-  // Load members automatically if a system exists
 useEffect(() => {
   if (!systemId) {
     setLoading(false);
@@ -29,14 +28,13 @@ useEffect(() => {
   async function load() {
     setLoading(true);
     await loadMembers();
-    await loadCurrentFront(); // 🔥 ADD THIS
+    await loadCurrentFront();
     setLoading(false);
   }
 
   load();
 }, [systemId]);
 
-  // Escape key closes modal
   useEffect(() => {
     const handler = (e) => {
       if (e.key === "Escape") onClose();
@@ -47,7 +45,6 @@ useEffect(() => {
 
   return (
     <>
-      {/* CARD */}
       <Card>
         <div className="border-4 border-black rounded-3xl p-6">
           <h2 className="font-bold mb-4">CURRENT FRONT:</h2>
@@ -81,8 +78,6 @@ useEffect(() => {
               <span className="text-sm text-gray-500">Nobody fronting</span>
             )}
 
-            {/* + button only works if a system exists */}
-
               <button
                 onClick={() => setOpen(true)}
                 className="text-4xl font-bold"
@@ -92,8 +87,6 @@ useEffect(() => {
           </div>
         </div>
       </Card>
-
-      {/* MODAL */}
       {open && systemId && (
         <div
           onClick={onClose}

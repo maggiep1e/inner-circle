@@ -9,7 +9,7 @@ export const useProfileStore = create((set, get) => ({
   profiles: [],
   loading: false,
 
-  // Load the active profile for the logged-in user
+ 
   loadProfile: async () => {
     const userId = useSessionStore.getState().user?.id;
     if (!userId) return;
@@ -25,14 +25,13 @@ export const useProfileStore = create((set, get) => ({
     }
   },
 
-  // Save profile updates — removes username unless explicitly set via setUsername
+
   saveProfile: async (updates) => {
     const userId = useSessionStore.getState().user?.id;
     if (!userId) throw new Error("User not logged in");
 
     const profile = get().profile || {};
 
-    // Only save username if explicitly set
     const { username: newUsername, ...rest } = updates;
     const safeProfile = { ...profile, ...rest, owner_id: userId };
 
@@ -46,13 +45,11 @@ export const useProfileStore = create((set, get) => ({
     }
   },
 
-  // Dedicated username update with uniqueness check
   setUsername: async (newUsername) => {
     if (!newUsername) throw new Error("Username cannot be empty");
     const userId = useSessionStore.getState().user?.id;
     if (!userId) throw new Error("User not logged in");
 
-    // Check if username already exists
     const { data, error } = await supabase
       .from("profiles")
       .select("id")
@@ -67,7 +64,6 @@ export const useProfileStore = create((set, get) => ({
     return saved;
   },
 
-  // Upload avatar and update profile safely
   uploadAvatar: async (file) => {
     const userId = useSessionStore.getState().user?.id;
     if (!userId) throw new Error("User not logged in");
@@ -75,7 +71,6 @@ export const useProfileStore = create((set, get) => ({
     const fileExt = file.name.split(".").pop();
     const filePath = `avatars/${userId}-${Date.now()}.${fileExt}`;
 
-    // Upload file
     const { error: uploadError } = await supabase.storage
       .from("avatars")
       .upload(filePath, file, { upsert: true });
@@ -85,7 +80,6 @@ export const useProfileStore = create((set, get) => ({
       throw uploadError;
     }
 
-    // Get public URL
     const { data: urlData, error: urlError } = supabase.storage
       .from("avatars")
       .getPublicUrl(filePath);
@@ -93,7 +87,6 @@ export const useProfileStore = create((set, get) => ({
     if (urlError) throw urlError;
     const publicUrl = urlData.publicUrl;
 
-    // Update profile safely (username untouched)
     await get().saveProfile({ avatar: publicUrl });
 
     return publicUrl;

@@ -35,7 +35,6 @@ export default function SystemEditor({ onDone }) {
   };
 
   try {
-    // Update system in your store / backend
     updateSystem(updated);
 
     useSystemStore.setState({

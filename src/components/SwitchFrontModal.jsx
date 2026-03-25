@@ -10,7 +10,6 @@ export default function SwitchFrontModal({ onClose }) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState([]);
 
-  // preload current front into local state
   useEffect(() => {
     setSelected(currentFront || []);
   }, [currentFront]);
@@ -31,7 +30,7 @@ export default function SwitchFrontModal({ onClose }) {
 
   const handleDone = async () => {
     if (!systemId) return;
-    await setFront(selected); // 🔥 ONE DB CALL
+    await setFront(selected);
     onClose();
   };
 
@@ -41,16 +40,12 @@ export default function SwitchFrontModal({ onClose }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-zinc-800 rounded-2xl p-6 w-[400px] shadow-xl">
         <h2 className="text-lg font-bold mb-4">Select Front</h2>
-
-        {/* SEARCH */}
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search members..."
           className="w-full mb-4 px-3 py-2 rounded bg-zinc-200 dark:bg-zinc-700"
         />
-
-        {/* LIST */}
         <div className="max-h-60 overflow-y-auto flex flex-col gap-2">
           {filtered.map((member) => {
             const selectedState = isSelected(member.id);
@@ -84,8 +79,6 @@ export default function SwitchFrontModal({ onClose }) {
             <span className="text-sm text-gray-500">No members found</span>
           )}
         </div>
-
-        {/* ACTIONS */}
         <div className="flex gap-2 mt-4">
           <button onClick={() => setSelected([])}>
             Clear
