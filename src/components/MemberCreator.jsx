@@ -3,6 +3,7 @@ import { useSystemStore } from "../store/systemStore";
 
 export default function MemberCreator({ close }) {
   const addMember = useSystemStore((s) => s.addMember);
+  const systemId = useSystemStore((s) => s.systemId)
 
   const [name, setName] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -10,22 +11,19 @@ export default function MemberCreator({ close }) {
   const [tags, setTags] = useState([]);
   const [folders, setFolders] = useState([]);
 
-  const create = async () => {
-    if (!name.trim()) return;
+  async function handleCreate() {
+    const newMember = {
+      name,
+      display_name: displayName,
+      color,
+      system_id: systemId,
+      tags: tags.map(t => t.trim()).filter(Boolean),
+      folders: folders.map(f => f.trim()).filter(Boolean),
+    };
 
-    try {
-      const newMember = await addMember({
-        name,
-        displayName,
-        color,
-        tags,
-        folders,
-      });
-      close(newMember);
-    } catch (err) {
-      console.error("Failed to create member:", err);
-    }
-  };
+    await addMember(newMember);
+    close();
+  }
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
@@ -68,13 +66,13 @@ export default function MemberCreator({ close }) {
 
         <div className="flex gap-2 justify-end">
           <button
-            onClick={create}
+            onClick={handleCreate}
             className="bg-purple-600 px-4 py-2 rounded text-white hover:bg-purple-700"
           >
             Create
           </button>
           <button
-            onClick={() => close()}
+            onClick={close}
             className="bg-zinc-200 px-4 py-2 rounded hover:bg-zinc-300"
           >
             Cancel

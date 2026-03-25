@@ -51,18 +51,18 @@ export default function ImportMembersPage() {
 
       const added = [];
       const skipped = [];
-      const existingNames = existingMembers.map((m) => normalizeName(m.name || m.displayName));
+      const existingNames = existingMembers.map((m) => normalizeName(m.name || m.display_name));
 
       for (let i = 0; i < members.length; i++) {
         const m = members[i];
-        const norm = normalizeName(m.name || m.displayName);
+        const norm = normalizeName(m.name || m.display_name);
         if (existingNames.includes(norm)) {
           skipped.push(m);
         } else {
           try {
             const newMember = await addMember({
             name: m.name,
-            displayName: m.displayName,
+            display_name: m.display_name,
             folders: m.folders || [],
 
             });
@@ -154,7 +154,7 @@ export default function ImportMembersPage() {
           <h2 className="font-semibold">Added Members:</h2>
           <ul className="list-disc pl-6">
             {importedMembers.map((m) => (
-              <li key={m.id}>{m.displayName || m.name}</li>
+              <li key={m.id}>{m.display_name || m.name}</li>
             ))}
           </ul>
         </div>
@@ -165,7 +165,7 @@ export default function ImportMembersPage() {
           <h2 className="font-semibold">Skipped Duplicates:</h2>
           <ul className="list-disc pl-6">
             {skippedMembers.map((m, i) => (
-              <li key={i}>{m.displayName || m.name}</li>
+              <li key={i}>{m.display_name || m.name}</li>
             ))}
           </ul>
         </div>

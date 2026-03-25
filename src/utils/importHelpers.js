@@ -11,10 +11,9 @@ export async function readExcelFile(file) {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(sheet);
-        // Map to { name, displayName }
         const members = json.map((row) => ({
           name: row.name || row.Name || "",
-          displayName: row.displayName || row.DisplayName || row.name || "",
+          display_name: row.displayName || row.DisplayName || row.name || "",
         }));
         resolve(members);
       } catch (err) {
@@ -36,7 +35,7 @@ export async function fetchPluralkitMembers(apiKey) {
   const data = await res.json();
   return data.map((m) => ({
     name: m.name,
-    displayName: m.display_name || m.name,
+    display_name: m.display_name || m.name,
   }));
 }
 
@@ -50,7 +49,7 @@ export async function fetchSimplyPluralMembers(apiKey) {
   const data = await res.json();
   return data.map((m) => ({
     name: m.name,
-    displayName: m.display_name || m.name,
+    display_name: m.display_name || m.name,
   }));
 }
 
@@ -64,6 +63,6 @@ export async function fetchOctoconMembers(apiKey) {
   const data = await res.json();
   return data.map((m) => ({
     name: m.name,
-    displayName: m.display_name || m.name,
+    display_name: m.display_name || m.name,
   }));
 }

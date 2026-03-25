@@ -15,7 +15,7 @@ export default function SwitchFrontModal({ onClose }) {
   }, [currentFront]);
 
   const filtered = members.filter((m) =>
-    ((m.displayName || m.name) ?? "")
+    ((m.display_name || m.name) ?? "")
       .toLowerCase()
       .includes(search.trim().toLowerCase())
   );
@@ -67,7 +67,7 @@ export default function SwitchFrontModal({ onClose }) {
                 </div>
 
                 <span className="flex-1 text-left">
-                  {member.displayName || member.name}
+                  {member.display_name || member.name}
                 </span>
 
                 {selectedState && <span className="text-xs">✓</span>}

@@ -5,6 +5,7 @@ import { useSessionStore } from "../store/sessionStore";
 import MemberProfile from "../components/MemberProfile";
 import MemberEditor from "../components/MemberEditor";
 import SearchBar from "../components/SearchBar";
+import MemberCreator from "../components/MemberCreator";
 
 export default function Members() {
   const members = useSystemStore((s) => s.members);
@@ -76,7 +77,7 @@ export default function Members() {
                 key={m.id}
                 className="border p-2 rounded bg-gray-50 dark:bg-zinc-800"
               >
-                <div className="font-semibold">{m.displayName || m.name}</div>
+                <div className="font-semibold">{m.display_name || m.name}</div>
                 <div className="flex gap-2 mt-2">
                   <button
                     className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm flex-1"
@@ -118,31 +119,7 @@ export default function Members() {
       )}
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-zinc-800 p-6 rounded shadow-lg w-96">
-            <h2 className="text-xl font-bold mb-4">Create New Member</h2>
-            <input
-              className="w-full border p-2 rounded mb-4"
-              placeholder="Member Name"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400"
-                onClick={() => setShowCreateModal(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600"
-                onClick={handleCreateMember}
-              >
-                Create
-              </button>
-            </div>
-          </div>
-        </div>
+        < MemberCreator />
       )}
     </>
   );

@@ -113,7 +113,7 @@ export default function Folders() {
                   ) : folderMembers[folder.id]?.length ? (
                     folderMembers[folder.id].map((m) => (
                       <div key={m.id} className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition">
-                        {m.displayName || m.name}
+                        {m.display_name || m.name}
                       </div>
                     ))
                   ) : (

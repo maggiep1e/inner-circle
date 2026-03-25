@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "@clerk/clerk-react";
-import { useIdStore } from "../store/idStore";
 import { getFrontAnalytics } from "../api/analytics";
+import { useSystemStore } from "../store/systemStore";
 
 export default function Analytics() {
-
-  const { getToken } = useAuth();
-  const systemId = useIdStore((s) => s.systemId);
+  const systemId = useSystemStore((s) => s.systemId);
 
   const [data, setData] = useState({});
 
@@ -14,9 +11,7 @@ export default function Analytics() {
 
     async function load() {
 
-      const token = await getToken();
-
-      const result = await getFrontAnalytics(systemId, token);
+      const result = await getFrontAnalytics(systemId);
 
       setData(result);
 

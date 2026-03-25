@@ -50,7 +50,7 @@ export default function MemberProfile({ member = {}, onEdit, onDone }) {
             </div>
           )}
           <div className="mt-12">
-            <h2 className="text-2xl font-bold">{member.displayName || member.name || "Unknown"}</h2>
+            <h2 className="text-2xl font-bold">{member.display_name || member.name || "Unknown"}</h2>
             <p className="text-gray-500">@{username}</p>
           </div>
           {tags.length > 0 && (

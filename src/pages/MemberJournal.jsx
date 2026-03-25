@@ -76,7 +76,7 @@ if (plan !== "pro") {
 
         {members.map(m => (
           <option key={m._id} value={m._id}>
-            {m.displayName || m.name}
+            {m.display_name || m.name}
           </option>
         ))}
       </select>
@@ -96,7 +96,7 @@ if (plan !== "pro") {
             }
             className="border px-2 py-1 rounded"
           >
-            {m.displayName || m.name}
+            {m.display_name || m.name}
           </button>
 
         ))}
@@ -138,7 +138,7 @@ if (plan !== "pro") {
             onClick={() => search(m._id)}
             className="border px-2 py-1 rounded"
           >
-            {m.displayName || m.name}
+            {m.display_name || m.name}
           </button>
 
         ))}

@@ -47,7 +47,7 @@ const save = async () => {
         .eq("id", f);
     }
 
-    updateMember(member.id, { name, displayName, color, tags, folders, avatar });
+    updateMember(member.id, { name, display_name: displayName, color, tags, folders, avatar });
 
     onDone();
   };

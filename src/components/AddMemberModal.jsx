@@ -50,7 +50,7 @@ export default function AddMemberModal({
           <option value="">Select member</option>
           {availableMembers.map((m) => (
             <option key={m.id} value={m.id}>
-              {m.displayName || m.name}
+              {m.display_name || m.name}
             </option>
           ))}
         </select>

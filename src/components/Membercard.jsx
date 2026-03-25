@@ -28,7 +28,7 @@ export default function MemberCard({ member, onFront }) {
             />
           ) : (
             <div className="flex items-center justify-center h-full">
-              {member.displayName[0]}
+              {member.display_name[0]}
             </div>
           )}
 
@@ -37,7 +37,7 @@ export default function MemberCard({ member, onFront }) {
         <div className="flex-1">
 
           <h3 className="font-semibold">
-            {member.displayName}
+            {member.display_name}
           </h3>
 
           <div className="flex items-center gap-2">
