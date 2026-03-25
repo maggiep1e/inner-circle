@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabase";
 import { useSessionStore } from "./store/sessionStore";
-import { useProfileStore } from "./store/profileStore";
 import { useSystemStore } from "./store/systemStore";
 
 import Sidebar from "./layout/Sidebar";
@@ -13,6 +12,7 @@ import App from "./App";
 export default function AppGate() {
   const setUser = useSessionStore((s) => s.setUser);
   const setProfile = useSessionStore((s) => s.setProfile);
+  const setProfileAvatarUrl = useSessionStore((s) => s.setProfileAvatarUrl);
   const setSystems = useSystemStore((s) => s.setSystems);
   const setCurrentSystem = useSystemStore((s) => s.setCurrentSystem);
 
@@ -24,7 +24,7 @@ export default function AppGate() {
   useEffect(() => {
     let mounted = true;
 
-    async function handleSession(session) {
+    const handleSession = async (session) => {
       if (!mounted) return;
 
       const userObj = session?.user;
@@ -32,6 +32,7 @@ export default function AppGate() {
       if (!userObj) {
         setUser(null);
         setProfile(null);
+        setProfileAvatarUrl(null);
         setSystems([]);
         setCurrentSystem(null);
         setLoading(false);
@@ -41,23 +42,24 @@ export default function AppGate() {
       setUser(userObj);
 
       try {
- 
-        const { data: profiles, error } = await supabase
+        // Try to fetch the profile by id (same as auth.user.id)
+        let { data: profiles, error: profileError } = await supabase
           .from("profiles")
           .select("*")
-          .eq("owner_id", userObj.id);
+          .eq("id", userObj.id)
+          .limit(1);
 
-        if (error) throw error;
+        if (profileError) throw profileError;
 
         let profile = profiles?.[0];
 
-
+        // If missing, create it safely with upsert
         if (!profile) {
-  
-          let baseUsername = userObj.email.split("@")[0];
+          const baseUsername = userObj.email.split("@")[0];
           let username = baseUsername;
           let counter = 1;
 
+          // Ensure username uniqueness
           while (true) {
             const { data: existing } = await supabase
               .from("profiles")
@@ -67,19 +69,26 @@ export default function AppGate() {
 
             if (!existing || existing.length === 0) break;
             username = `${baseUsername}_${counter}`;
-            counter += 1;
+            counter++;
           }
 
+          // Upsert using id from auth.user
           const { data: newProfile, error: insertError } = await supabase
             .from("profiles")
-            .insert([{
-              type: "user",
-              owner_id: userObj.id,
-              display_name: userObj.email,
-              username,
-              mode: "system",
-              avatar: null
-            }])
+            .upsert(
+              [
+                {
+                  id: userObj.id,       // use auth.user.id
+                  type: "user",
+                  owner_id: userObj.id,
+                  display_name: userObj.email,
+                  username,
+                  mode: "system",
+                  avatar: null,
+                },
+              ],
+              { onConflict: "id", returning: "representation" } // conflict on primary key
+            )
             .select()
             .single();
 
@@ -87,17 +96,20 @@ export default function AppGate() {
           profile = newProfile;
         }
 
+        // Load avatar URL if exists
+        let avatarUrl = null;
         if (profile.avatar) {
           const { data: urlData, error: urlError } = supabase
             .storage
             .from("avatars")
             .getPublicUrl(profile.avatar);
-
-          if (!urlError) profile.avatarUrl = urlData.publicUrl;
+          if (!urlError) avatarUrl = urlData.publicUrl;
         }
 
         setProfile(profile);
+        setProfileAvatarUrl(avatarUrl);
 
+        // Load systems
         const { data: systemsData, error: systemsError } = await supabase
           .from("systems")
           .select("*")
@@ -107,7 +119,7 @@ export default function AppGate() {
 
         setSystems(systemsData || []);
 
-        // 5️⃣ Set default system if none
+        // Set default system
         if ((systemsData?.length || 0) > 0 && !currentSystem) {
           setCurrentSystem(systemsData[0]);
         }
@@ -116,7 +128,7 @@ export default function AppGate() {
       } finally {
         if (mounted) setLoading(false);
       }
-    }
+    };
 
     // Initial session
     supabase.auth.getSession().then(({ data: { session } }) => handleSession(session));
@@ -130,9 +142,8 @@ export default function AppGate() {
       mounted = false;
       listener.subscription.unsubscribe();
     };
-  }, [setUser, setProfile, setSystems, setCurrentSystem, currentSystem]);
+  }, [setUser, setProfile, setProfileAvatarUrl, setSystems, setCurrentSystem, currentSystem]);
 
-  // Layout wrapper
   const Layout = ({ children }) => (
     <div className="flex h-screen w-screen bg-white dark:bg-zinc-900 text-black dark:text-white">
       <Sidebar />

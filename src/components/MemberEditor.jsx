@@ -1,164 +1,59 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSystemStore } from "../store/systemStore";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "../lib/supabase";
 
-export default function MemberEditor({ member = {}, onDone }) {
+export default function MemberEditor({ member, onDone }) {
   const updateMember = useSystemStore((s) => s.updateMember);
-  const systemFolders = useSystemStore((s) => s.systemFolders || []);
-  const systemId = useSystemStore((s) => s.systemId);
-  const navigate = useNavigate();
-
-  const normalizeArray = (value) => {
-    if (!value) return [];
-    if (Array.isArray(value)) return value.filter(Boolean);
-    if (typeof value === "string") {
-      try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) return parsed.filter(Boolean);
-      } catch {}
-      return value.split(",").map((v) => v.trim()).filter(Boolean);
-    }
-    return [];
-  };
-
   const [name, setName] = useState(member.name || "");
-  const [displayName, setDisplayName] = useState(member.displayName || "");
-  const [color, setColor] = useState(member.color || "#ffffff");
-  const [tags, setTags] = useState(normalizeArray(member.tags));
-  const [folders, setFolders] = useState(normalizeArray(member.folders));
-  const [avatar, setAvatar] = useState(member.avatar || "");
-  const [folderSearch, setFolderSearch] = useState("");
+  const [tags, setTags] = useState(member.tags?.join(", ") || "");
+  const [folders, setFolders] = useState(member.folders?.join(", ") || "");
 
-  
-const save = async () => {
-    await supabase
-      .from("members")
-      .update({ folders })
-      .eq("id", member.id);
-
-    for (const f of folders) {
-      const folder = systemFolders.find(x => x.id === f);
-      if (!folder) continue;
-      const updatedMemberIds = Array.from(new Set([...(folder.member_ids || []), member.id]));
-      await supabase
-        .from("folders")
-        .update({ member_ids: updatedMemberIds })
-        .eq("id", f);
-    }
-
-    updateMember(member.id, { name, display_name: displayName, color, tags, folders, avatar });
-
+  const handleSave = async () => {
+    await updateMember(member.id, {
+      name,
+      tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      folders: folders.split(",").map((f) => f.trim()).filter(Boolean),
+    });
     onDone();
   };
 
-  const addFolder = (folderId) => {
-    if (!folders.includes(folderId)) setFolders([...folders, folderId]);
-    setFolderSearch("");
-  };
-
-  const removeFolder = (folderId) => {
-    setFolders(folders.filter((f) => f !== folderId));
-  };
-
-  const filteredFolders = systemFolders.filter(
-    (f) =>
-      f.name.toLowerCase().includes(folderSearch.toLowerCase()) &&
-      !folders.includes(f.id)
-  );
-
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="dark:bg-zinc-800 p-6 rounded-xl w-96 flex flex-col gap-4">
-
-        <h2 className="text-xl font-bold">Edit Member</h2>
-
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl w-full max-w-md p-6 flex flex-col space-y-4">
         <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = () => setAvatar(reader.result);
-            reader.readAsDataURL(file);
-          }}
-        />
-
-        <input
+          type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name"
-          className="bg-zinc-700 px-3 py-2 rounded"
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
-
         <input
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          placeholder="Display name"
-          className="bg-zinc-700 px-3 py-2 rounded"
+          type="text"
+          value={tags}
+          onChange={(e) => setTags(e.target.value)}
+          placeholder="Tags (comma separated)"
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
-
         <input
-          type="color"
-          value={color}
-          onChange={(e) => setColor(e.target.value)}
-          className="w-16 h-8 p-0 border-none"
+          type="text"
+          value={folders}
+          onChange={(e) => setFolders(e.target.value)}
+          placeholder="Folders (comma separated)"
+          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
-
-        <input
-          placeholder="tags (comma separated)"
-          value={tags.join(",")}
-          onChange={(e) =>
-            setTags(e.target.value.split(",").map((t) => t.trim()).filter(Boolean))
-          }
-          className="bg-zinc-700 px-3 py-2 rounded"
-        />
-
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-wrap gap-2">
-            {folders.map((id) => {
-              const folder = systemFolders.find((f) => f.id === id);
-              if (!folder) return null;
-              return (
-                <span
-                  key={id}
-                  className="bg-blue-200 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center gap-1"
-                >
-                  📁 {folder.name}
-                  <button onClick={() => removeFolder(id)} className="text-xs font-bold">×</button>
-                </span>
-              );
-            })}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {filteredFolders.map((sf) => (
-              <button
-                key={sf.id}
-                onClick={() => addFolder(sf.id)}
-                className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded hover:bg-blue-200"
-              >
-                {sf.name}
-              </button>
-            ))}
-            <button
-              onClick={() => navigate("/folders")}
-              className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded hover:bg-green-200"
-            >
-              + New Folder
-            </button>
-          </div>
-        </div>
-
-        <div className="flex gap-2 mt-2">
-          <button onClick={save} className="bg-purple-600 px-4 py-2 rounded text-white hover:bg-purple-700">
-            Save
-          </button>
-          <button onClick={onDone} className="bg-gray-500 px-4 py-2 rounded text-white hover:bg-gray-600">
+        <div className="flex justify-end gap-2 mt-2">
+          <button
+            onClick={onDone}
+            className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+          >
             Cancel
           </button>
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Save
+          </button>
         </div>
-
       </div>
     </div>
   );

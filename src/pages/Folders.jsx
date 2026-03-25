@@ -8,6 +8,7 @@ import AddMemberModal from "../components/AddMemberModal";
 export default function Folders() {
   const profile = useSessionStore((s) => s.profile);
   const mode = useSessionStore((s) => s.mode);
+  const user = useSessionStore((s) => s.user);
 
   const systemId = useSystemStore((s) => s.systemId);
   const systemMembers = useSystemStore((s) => s.members);
@@ -43,7 +44,7 @@ export default function Folders() {
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
-    await createFolder({ name: newFolderName, system_id: systemId });
+    await createFolder({ name: newFolderName, system_id: systemId, user_id: user.id });
     await loadFolders();
     setShowCreateModal(false);
     setNewFolderName("");

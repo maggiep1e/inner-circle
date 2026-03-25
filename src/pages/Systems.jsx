@@ -1,8 +1,10 @@
+// src/pages/Systems.jsx
 import { useState } from "react";
 import { useSystemStore } from "../store/systemStore";
 import { useSessionStore } from "../store/sessionStore";
 import SystemProfile from "../components/SystemProfile";
 import SystemEditor from "../components/SystemEditor";
+import SystemCreator from "../components/SystemCreator";
 
 export default function Systems() {
   const user = useSessionStore((s) => s.user);
@@ -12,42 +14,23 @@ export default function Systems() {
   const systems = useSystemStore((s) => s.systems);
   const currentSystem = useSystemStore((s) => s.currentSystem);
   const setCurrentSystem = useSystemStore((s) => s.setCurrentSystem);
-  const createAndSetSystem = useSystemStore((s) => s.createAndSetSystem);
   const loadMembers = useSystemStore((s) => s.loadMembers);
 
+  const isPaid = profile?.plan === "paid";
+
   // --- Local modal state ---
-  const [modalMode, setModalMode] = useState("closed"); // "view" | "edit" | "closed"
+  const [modalMode, setModalMode] = useState("closed"); // "view" | "edit" | "create" | "closed"
   const [modalSystem, setModalSystem] = useState(null);
 
   if (!profile) return <div>Loading profile...</div>;
-  if (mode !== "system") return <div className="text-gray-400">This feature is for systems only.</div>;
+  if (mode !== "system")
+    return <div className="text-gray-400">This feature is for systems only.</div>;
 
-  const isPaid = user?.plan === "paid";
-
-  const handleCreateSystem = async () => {
-    if (!user) return;
-    if (!isPaid && systems.length >= 1) {
-      alert("Free plan limit reached. Upgrade to add more systems!");
-      return;
-    }
-
-    const name = prompt("Enter system name");
-    if (!name) return;
-
-    try {
-      const newSystem = await createAndSetSystem(name);
-      if (newSystem) await loadMembers();
-    } catch (err) {
-      console.error("Failed to create system:", err);
-    }
-  };
-
-
+  // --- Modal handlers ---
   const handleOpenModal = (sys, mode) => {
     setModalSystem(sys);
     setModalMode(mode);
   };
-
 
   const handleCloseModal = () => {
     setModalMode("closed");
@@ -56,12 +39,22 @@ export default function Systems() {
 
   const handleSaveSystem = (updated) => {
     setCurrentSystem(updated);
-    setModalMode("closed");
-    setModalSystem(null);
+    handleCloseModal();
+  };
+
+  const handleCreateSystem = () => {
+    if (!user) return;
+    if (!isPaid && systems.length >= 1) {
+      alert("Free plan limit reached. Upgrade to add more systems!");
+      return;
+    }
+
+    setModalMode("create");
   };
 
   return (
     <div className="flex gap-6">
+      {/* --- Sidebar --- */}
       <div className="w-60 space-y-2">
         <h2 className="text-xl font-bold">Your System{isPaid ? "s" : ""}</h2>
 
@@ -104,21 +97,33 @@ export default function Systems() {
         </button>
       </div>
 
+      {/* --- Main area --- */}
       <div className="flex-1">
-        {modalMode !== "closed" && modalSystem && (
-          modalMode === "view" ? (
-            <SystemProfile
-              system={modalSystem}
-              onEdit={() => setModalMode("edit")}
-              onDone={handleCloseModal}
-            />
-          ) : (
-            <SystemEditor
-              system={modalSystem}
-              onDone={handleCloseModal}
-              onSave={handleSaveSystem} 
-            />
-          )
+        {modalMode !== "closed" && (
+          <>
+            {modalMode === "view" && modalSystem && (
+              <SystemProfile
+                system={modalSystem}
+                onEdit={() => setModalMode("edit")}
+                onDone={handleCloseModal}
+              />
+            )}
+            {modalMode === "edit" && modalSystem && (
+              <SystemEditor
+                system={modalSystem}
+                onDone={handleCloseModal}
+                onSave={handleSaveSystem}
+              />
+            )}
+            {modalMode === "create" && (
+              <SystemCreator
+                onDone={() => {
+                  handleCloseModal();
+                  loadMembers(); // reload after creating a system
+                }}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

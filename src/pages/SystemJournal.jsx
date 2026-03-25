@@ -7,7 +7,7 @@ export default function SystemJournal() {
   const systemId = useSystemStore((s) => s.systemId);
   const members = useSystemStore((s) => s.members);
   const mode = useSessionStore((s) => s.mode);
-  const profile = useSessionStore((s) => s.profile);
+  const user = useSessionStore((s) => s.user)
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -40,7 +40,7 @@ export default function SystemJournal() {
     if (!systemId) return;
     setSaving(true);
     try {
-      await createSystemJournal({ system_id: systemId, author_member_id: profile.id, title, content });
+      await createSystemJournal({ system_id: systemId, user_id: user.id, title, content });
       setTitle(""); setContent("");
       const data = await getSystemJournals(systemId);
       setEntries(data || []);

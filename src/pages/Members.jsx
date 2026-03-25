@@ -9,10 +9,13 @@ import MemberCreator from "../components/MemberCreator";
 
 export default function Members() {
   const members = useSystemStore((s) => s.members);
-  const loadMembers = useSystemStore((s) => s.loadMembers);
-  const addMember = useSystemStore((s) => s.addMember);
   const systemId = useSystemStore((s) => s.systemId);
-  const system = useSystemStore((s) => s.systems.find((sys) => sys.id === systemId));
+const systems = useSystemStore((s) => s.systems);
+
+const system = useMemo(
+  () => systems.find((sys) => sys.id === systemId),
+  [systems, systemId]
+);
 
   const mode = useSessionStore((s) => s.mode);
 
@@ -20,29 +23,17 @@ export default function Members() {
   const [modalMode, setModalMode] = useState("closed");
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newName, setNewName] = useState("");
   const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    if (!systemId) return;
-    setLoading(true);
-    loadMembers().finally(() => setLoading(false));
-  }, [systemId]);
-
-  const handleCreateMember = async () => {
-    if (!newName.trim()) return;
-    const newMember = await addMember({ name: newName, systemId });
-    setSelected(newMember);
-    setModalMode("edit");
-    setNewName("");
-    setShowCreateModal(false);
-  };
 
   const filteredMembers = useMemo(() => {
     if (!search.trim()) return members;
     const term = search.toLowerCase();
     return members.filter((m) => m.name.toLowerCase().includes(term));
   }, [members, search]);
+
+    useEffect(() => {
+  if (members) setLoading(false);
+}, [members]);
 
   if (mode !== "system") return <div className="text-gray-400">This feature is for systems only.</div>;
 
@@ -119,7 +110,10 @@ export default function Members() {
       )}
 
       {showCreateModal && (
-        < MemberCreator />
+        < MemberCreator 
+        onDone={() => setShowCreateModal(false)
+        }
+        />
       )}
     </>
   );

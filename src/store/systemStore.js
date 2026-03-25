@@ -1,17 +1,19 @@
 import { create } from "zustand";
-import { getMembers, createMember, updateMember } from "../api/members";
-import { getSystems, createSystem } from "../api/systems";
+import { getMembers, createMember, updateMember as updateMemberApi } from "../api/members";
+import { getSystems, createSystem, updateSystem as updateSystemApi } from "../api/systems";
 import { getFoldersBySystem } from "../api/folders";
 import { useSessionStore } from "./sessionStore";
+import { supabase } from "../lib/supabase";
 
 export const useSystemStore = create((set, get) => ({
-  // --- State ---
   systemId: null,
   systems: [],
   members: [],
   systemFolders: [],
   currentFront: [],
   currentSystem: null,
+  avatarUrls: {},
+  systemAvatarUrls: {},
 
   // --- Setters ---
   setSystemId: (id) => set({ systemId: id }),
@@ -22,55 +24,64 @@ export const useSystemStore = create((set, get) => ({
       if (!get().currentSystem) set({ currentSystem: systems[0] });
     }
   },
+
+
+
   setCurrentSystem: (system) => {
     if (!system) return;
     set({ currentSystem: system, systemId: system.id });
   },
+
+addSystem: async (systemData) => {
+  const { data, error } = await supabase
+    .from("systems")
+    .insert([systemData])
+    .select()
+    .single();
+  if (error) throw error;
+
+  set((state) => ({
+    systems: [...state.systems, data],
+  }));
+
+  return data;
+},
+
+
+
   setCurrentFront: (memberIds) => set({ currentFront: memberIds }),
+  setAvatarUrl: (id, url) =>
+    set((state) => ({ avatarUrls: { ...state.avatarUrls, [id]: url } })),
+  setSystemAvatarUrl: (id, url) =>
+    set((state) => ({ systemAvatarUrls: { ...state.systemAvatarUrls, [id]: url } })),
 
   // --- Front Management ---
   setFront: async (memberIds) => {
     const systemId = get().systemId;
     if (!systemId) return;
 
-    const { supabase } = await import("../lib/supabase");
-
-    // Insert one row per member
     const inserts = memberIds.map((id) => ({ system_id: systemId, member_id: id }));
     const { error } = await supabase.from("front_logs").insert(inserts);
-
-    if (error) {
-      console.error("Failed to set front:", error);
-      return;
-    }
-
+    if (error) console.error("Failed to set front:", error);
     set({ currentFront: memberIds });
   },
-
   toggleFront: async (memberId) => {
     const current = get().currentFront;
     const updated = current.includes(memberId)
       ? current.filter((id) => id !== memberId)
       : [...current, memberId];
-
     await get().setFront(updated);
   },
-
   loadCurrentFront: async () => {
     const systemId = get().systemId;
     if (!systemId) return;
 
-    const { supabase } = await import("../lib/supabase");
     const { data, error } = await supabase
       .from("front_logs")
       .select("member_id")
       .eq("system_id", systemId);
 
-    if (error) {
-      console.error("Failed to load front:", error);
-      return;
-    }
-
+    if (error) return console.error("Failed to load front:", error);
     set({ currentFront: data.map((f) => f.member_id) });
   },
 
@@ -83,15 +94,21 @@ export const useSystemStore = create((set, get) => ({
       const data = await getSystems(userId);
       const filtered = !user?.plan || user.plan !== "paid" ? data.slice(0, 1) : data;
 
-      set({ systems: filtered });
+      const systemAvatars = {};
+      filtered.forEach((s) => {
+        if (s.avatar) {
+          const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(s.avatar);
+          systemAvatars[s.id] = urlData.publicUrl;
+        }
+      });
+
+      set({ systems: filtered, systemAvatarUrls: systemAvatars });
 
       if (filtered.length > 0) {
         get().setSystemId(filtered[0].id);
         set({ currentSystem: filtered[0] });
         await get().loadCurrentFront();
-      } else {
-        set({ currentSystem: null });
-      }
+      } else set({ currentSystem: null });
     } catch (err) {
       console.error("Failed to load systems:", err);
       set({ systems: [], currentSystem: null });
@@ -99,9 +116,7 @@ export const useSystemStore = create((set, get) => ({
   },
 
   createAndSetSystem: async (name) => {
-    const { data: { user } } = await import("../lib/supabase").then((m) =>
-      m.supabase.auth.getUser()
-    );
+    const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
     const currentSystems = get().systems;
@@ -118,46 +133,53 @@ export const useSystemStore = create((set, get) => ({
   },
 
   updateSystem: async (id, updates) => {
-    try {
-      const updated = await updateSystemApi(id, updates); // make sure updateSystemApi is imported
-      set((state) => ({
-        systems: state.systems.map((s) => (s.id === id ? updated : s)),
-        currentSystem: state.currentSystem?.id === id ? updated : state.currentSystem,
-      }));
-      return updated;
-    } catch (err) {
-      console.error("Failed to update system:", err);
-      throw err;
-    }
+    const updated = await updateSystemApi(id, updates);
+    set((state) => ({
+      systems: state.systems.map((s) => (s.id === id ? updated : s)),
+      currentSystem: state.currentSystem?.id === id ? updated : state.currentSystem,
+    }));
+    return updated;
   },
 
   // --- Members ---
   loadMembers: async () => {
     const systemId = get().systemId;
-    if (!systemId) return set({ members: [] });
+    if (!systemId) return set({ members: [], avatarUrls: {} });
 
     try {
       const data = await getMembers(systemId);
       const normalized = data.map((m) => ({ ...m, id: m._id || m.id }));
-      set({ members: normalized });
+
+      const avatarUrls = {};
+      normalized.forEach((m) => {
+        if (m.avatar) {
+          const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(m.avatar);
+          avatarUrls[m.id] = urlData.publicUrl;
+        }
+      });
+
+      set({ members: normalized, avatarUrls });
       return normalized;
     } catch (err) {
       console.error("Failed to load members:", err);
-      set({ members: [] });
+      set({ members: [], avatarUrls: {} });
       return [];
     }
   },
-
   addMember: async (memberData) => {
     const systemId = get().systemId;
     if (!systemId) throw new Error("No system selected");
 
     const newMember = await createMember({ ...memberData, system_id: systemId });
     const normalized = { ...newMember, id: newMember._id || newMember.id };
+
     set((state) => ({ members: [normalized, ...state.members] }));
+    if (normalized.avatar) {
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(normalized.avatar);
+      get().setAvatarUrl(normalized.id, urlData.publicUrl);
+    }
     return normalized;
   },
-
   updateMember: async (id, updates) => {
     const normalizedUpdates = {
       ...updates,
@@ -165,7 +187,7 @@ export const useSystemStore = create((set, get) => ({
       tags: Array.isArray(updates.tags) ? updates.tags.map((t) => t.trim()).filter(Boolean) : [],
     };
 
-    const updated = await updateMember(id, normalizedUpdates);
+    const updated = await updateMemberApi(id, normalizedUpdates);
     const normalized = {
       ...updated,
       id: updated._id || updated.id,
@@ -176,6 +198,11 @@ export const useSystemStore = create((set, get) => ({
     set((state) => ({
       members: state.members.map((m) => (m.id === id ? normalized : m)),
     }));
+
+    if (normalized.avatar) {
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(normalized.avatar);
+      get().setAvatarUrl(normalized.id, urlData.publicUrl);
+    }
   },
 
   // --- Folders ---
@@ -191,11 +218,7 @@ export const useSystemStore = create((set, get) => ({
       set({ systemFolders: [] });
     }
   },
-
-  addFolder: (folder) => {
-    set((state) => ({ systemFolders: [...state.systemFolders, folder] }));
-  },
-
+  addFolder: (folder) => set((state) => ({ systemFolders: [...state.systemFolders, folder] })),
   updateFolderMembers: (folderId, memberIds) => {
     const members = get().members.map((m) => {
       if (memberIds.includes(m.id)) {
