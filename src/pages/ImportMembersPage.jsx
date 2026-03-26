@@ -1,173 +1,239 @@
 import { useState } from "react";
-import * as XLSX from "xlsx";
 import { useSystemStore } from "../store/systemStore";
 import {
-  readExcelFile,
-  fetchPluralkitMembers,
-  fetchSimplyPluralMembers,
-  fetchOctoconMembers,
-} from "../utils/importHelpers";
+  importFromExcel,
+  importFromPluralKit,
+} from "../utils/memberImportAdapters";
 
 export default function ImportMembersPage() {
   const systemId = useSystemStore((s) => s.systemId);
   const addMember = useSystemStore((s) => s.addMember);
   const existingMembers = useSystemStore((s) => s.members);
 
+  const [step, setStep] = useState(1);
   const [source, setSource] = useState("");
   const [file, setFile] = useState(null);
   const [apiKey, setApiKey] = useState("");
-  const [progress, setProgress] = useState({ completed: 0, total: 0 });
+
+  const [rawMembers, setRawMembers] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [importedMembers, setImportedMembers] = useState([]);
-  const [skippedMembers, setSkippedMembers] = useState([]);
 
-  const normalizeName = (name) => name?.trim().toLowerCase();
+  const [progress, setProgress] = useState({ completed: 0, total: 0 });
 
-  const handleFileChange = (e) => setFile(e.target.files[0]);
+  const [results, setResults] = useState({
+    added: [],
+    skipped: [],
+  });
 
-  const handleImport = async () => {
+  const normalize = (n) => (n || "").toLowerCase().trim();
+
+  const loadData = async () => {
+  setLoading(true);
+
+  try {
+    let members = [];
+
+    if (source === "excel") {
+      members = await importFromExcel(file);
+    }
+
+    if (source === "pluralkit") {
+      members = await importFromPluralKit(apiKey);
+    }
+    setRawMembers(members);
+    setStep(2);
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Failed to load members");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  const runImport = async () => {
     if (!systemId) return alert("No system selected");
+    if (!rawMembers.length) return alert("No members to import");
+
+    setStep(3);
     setLoading(true);
-    setImportedMembers([]);
-    setSkippedMembers([]);
-    setProgress({ completed: 0, total: 0 });
 
-    try {
-      let members = [];
+    const added = [];
+    const skipped = [];
 
-      if (source === "excel" && file) {
-        members = await readExcelFile(file);
-      } else if (source === "pluralkit") {
-        members = await fetchPluralkitMembers(apiKey);
-      } else if (source === "simplyplural") {
-        members = await fetchSimplyPluralMembers(apiKey);
-      } else if (source === "octocon") {
-        members = await fetchOctoconMembers(apiKey);
-      }
+    const existingSet = new Set(
+  (existingMembers || []).map((m) =>
+    normalize(m.display_name || m.name)
+  )
+);
 
-      if (!members.length) throw new Error("No members found");
+    setProgress({ completed: 0, total: rawMembers.length });
 
-      setProgress({ completed: 0, total: members.length });
+    for (let i = 0; i < rawMembers.length; i++) {
+      const m = rawMembers[i];
+      const name = normalize(m.display_name || m.name);
 
-      const added = [];
-      const skipped = [];
-      const existingNames = existingMembers.map((m) => normalizeName(m.name || m.display_name));
-
-      for (let i = 0; i < members.length; i++) {
-        const m = members[i];
-        const norm = normalizeName(m.name || m.display_name);
-        if (existingNames.includes(norm)) {
-          skipped.push(m);
-        } else {
-          try {
-            const newMember = await addMember({
+      if (existingSet.has(name)) {
+        skipped.push(m);
+      } else {
+        try {
+          const newMember = await addMember({
+            system_id: systemId,
             name: m.name,
             display_name: m.display_name,
-            folders: m.folders || [],
+            color: m.color,
+            description: m.decription,
+            avatar: m.avatar_url
+          });
 
-            });
-            added.push(newMember);
-          } catch (err) {
-            console.error(`Failed to add member ${m.name}:`, err);
-            skipped.push(m);
-          }
+          added.push(newMember);
+        } catch (err) {
+          console.error(err);
+          skipped.push(m);
         }
-        setProgress({ completed: i + 1, total: members.length });
       }
 
-      setImportedMembers(added);
-      setSkippedMembers(skipped);
-      alert(`Added ${added.length}, skipped ${skipped.length} duplicate(s)`);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to import members");
-    } finally {
-      setLoading(false);
+      setProgress({ completed: i + 1, total: rawMembers.length });
     }
+
+    setResults({ added, skipped });
+    setLoading(false);
+    setStep(4);
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-6 space-y-6">
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+
       <h1 className="text-2xl font-bold">Import Members</h1>
 
-      <div className="flex flex-col gap-2">
-        <label>Choose Source:</label>
-        <select
-          className="border p-2 rounded"
-          value={source}
-          onChange={(e) => setSource(e.target.value)}
-        >
-          <option value="">Select Source</option>
-          <option value="excel">Excel / CSV</option>
-          <option value="pluralkit">PluralKit</option>
-          <option value="simplyplural">Simply Plural</option>
-          <option value="octocon">Octocon</option>
-        </select>
+      {/* STEP INDICATOR */}
+      <div className="flex gap-2 text-sm">
+        {["Source", "Preview", "Importing", "Results"].map((s, i) => (
+          <div
+            key={s}
+            className={`px-3 py-1 rounded ${
+              step === i + 1 ? "bg-blue-500 text-white" : "bg-zinc-200"
+            }`}
+          >
+            {s}
+          </div>
+        ))}
       </div>
 
-      {source === "excel" && (
-        <div className="flex flex-col gap-2">
-          <label>Upload Excel/CSV File:</label>
-          <input type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} />
+      {/* STEP 1: SOURCE */}
+      {step === 1 && (
+        <div className="space-y-4">
+          <select
+            className="border p-2 rounded w-full"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+          >
+            <option value="">Select Source</option>
+            <option value="excel">Excel / CSV</option>
+            <option value="pluralkit">PluralKit</option>
+          </select>
+
+          {source === "excel" && (
+            <input
+              type="file"
+              onChange={(e) => setFile(e.target.files[0])}
+            />
+          )}
+
+          {source !== "excel" && source && (
+            <input
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="API Token"
+              className="border p-2 rounded w-full"
+            />
+          )}
+
+          <button
+            onClick={loadData}
+            disabled={loading}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Load Preview
+          </button>
         </div>
       )}
 
-      {(source === "pluralkit" || source === "simplyplural" || source === "octocon") && (
-        <div className="flex flex-col gap-2">
-          <label>API Key / Token:</label>
-          <input
-            type="text"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            className="border p-2 rounded"
-          />
+      {/* STEP 2: PREVIEW */}
+      {step === 2 && (
+        <div className="space-y-4">
+          <h2 className="font-semibold">
+            Preview ({rawMembers.length} members)
+          </h2>
+
+          <div className="max-h-80 overflow-y-auto border rounded p-2">
+            {rawMembers.map((m, i) => (
+              <div key={i} className="border-b py-1">
+                {m.display_name || m.name}
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setStep(1)}
+              className="px-3 py-1 bg-gray-300 rounded"
+            >
+              Back
+            </button>
+
+            <button
+              onClick={runImport}
+              className="px-3 py-1 bg-green-500 text-white rounded"
+            >
+              Start Import
+            </button>
+          </div>
         </div>
       )}
 
-      <button
-        onClick={handleImport}
-        disabled={
-          loading ||
-          !source ||
-          (source === "excel" && !file) ||
-          (source !== "excel" && !apiKey)
-        }
-        className={`px-4 py-2 rounded text-white ${loading ? "bg-gray-400" : "bg-blue-500 hover:bg-blue-600"}`}
-      >
-        {loading ? "Importing..." : "Import Members"}
-      </button>
-
-      {loading && progress.total > 0 && (
-        <div className="mt-4">
-          <div className="w-full bg-gray-300 rounded h-4 overflow-hidden">
+      {/* STEP 3: IMPORTING */}
+      {step === 3 && (
+        <div>
+          <div className="w-full bg-gray-200 h-4 rounded overflow-hidden">
             <div
               className="bg-green-500 h-4 transition-all"
-              style={{ width: `${(progress.completed / progress.total) * 100}%` }}
+              style={{
+                width: progress.total
+  ? `${(progress.completed / progress.total) * 100}%`
+  : "0%",
+              }}
             />
           </div>
-          <p className="text-sm mt-1">{`Processed ${progress.completed} of ${progress.total} members`}</p>
+
+          <p className="text-sm mt-2">
+            Importing {progress.completed} / {progress.total}
+          </p>
         </div>
       )}
 
-      {importedMembers.length > 0 && (
-        <div className="mt-4">
-          <h2 className="font-semibold">Added Members:</h2>
-          <ul className="list-disc pl-6">
-            {importedMembers.map((m) => (
-              <li key={m.id}>{m.display_name || m.name}</li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* STEP 4: RESULTS */}
+      {step === 4 && (
+        <div className="space-y-4">
+          <h2 className="font-semibold text-green-600">
+            Added: {results.added.length}
+          </h2>
 
-      {skippedMembers.length > 0 && (
-        <div className="mt-4 text-yellow-600">
-          <h2 className="font-semibold">Skipped Duplicates:</h2>
-          <ul className="list-disc pl-6">
-            {skippedMembers.map((m, i) => (
-              <li key={i}>{m.display_name || m.name}</li>
-            ))}
-          </ul>
+          <h2 className="font-semibold text-yellow-600">
+            Skipped: {results.skipped.length}
+          </h2>
+
+          <button
+            onClick={() => {
+              setStep(1);
+              setRawMembers([]);
+              setResults({ added: [], skipped: [] });
+              setApiKey("");
+              setFile(null);
+            }}
+            className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Import More
+          </button>
         </div>
       )}
     </div>

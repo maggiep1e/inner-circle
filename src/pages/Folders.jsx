@@ -4,6 +4,8 @@ import { useSessionStore } from "../store/sessionStore";
 import { supabase } from "../lib/supabase";
 import { getMembersByFolder, createFolder, deleteFolder } from "../api/folders";
 import AddMemberModal from "../components/AddMemberModal";
+import EditFolderModal from "../components/EditFolderModal";
+import CreateFolderModal from "../components/CreateFolderModal";
 
 export default function Folders() {
   const profile = useSessionStore((s) => s.profile);
@@ -19,10 +21,11 @@ export default function Folders() {
   const [folderMembers, setFolderMembers] = useState({});
   const [membersLoading, setMembersLoading] = useState(false);
 
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [selectedFolderForAdd, setSelectedFolderForAdd] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const [editingFolder, setEditingFolder] = useState(null);
 
   if (mode !== "system") return <div className="text-gray-400">This feature is for systems only.</div>;
   if (!profile) return <div>Loading profile...</div>;
@@ -42,19 +45,27 @@ export default function Folders() {
     setMembersLoading(false);
   };
 
-  const handleCreateFolder = async () => {
-    if (!newFolderName.trim()) return;
-    await createFolder({ name: newFolderName, system_id: systemId, user_id: user.id });
-    await loadFolders();
-    setShowCreateModal(false);
-    setNewFolderName("");
-  };
+  const handleCreateFolder = async (data) => {
+  await createFolder({
+    name: data.name,
+    system_id: systemId,
+    user_id: user.id,
+    color: data.color,
+    emoji: data.emoji,
+  });
+
+  await loadFolders();
+};
 
   const handleDeleteFolder = async (folderId) => {
-    if (!confirm("Are you sure you want to delete this folder?")) return;
+    if (!confirm("Delete this folder?")) return;
+
     await deleteFolder(folderId);
     await loadFolders();
-    if (expandedFolderId === folderId) setExpandedFolderId(null);
+
+    if (expandedFolderId === folderId) {
+      setExpandedFolderId(null);
+    }
   };
 
   const handleAddMember = async (memberId) => {
@@ -63,7 +74,11 @@ export default function Folders() {
     const folder = folders.find(f => f.id === selectedFolderForAdd);
     const member = systemMembers.find(m => m.id === memberId);
 
-    const updatedFolders = Array.from(new Set([...(member.folders || []), folder.id]));
+    const updatedFolders = Array.from(new Set([
+      ...(member.folders || []),
+      folder.id
+    ]));
+
     await supabase
       .from("members")
       .update({ folders: updatedFolders })
@@ -78,6 +93,8 @@ export default function Folders() {
 
   return (
     <div className="flex flex-col gap-4">
+
+      {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Folders</h1>
         <button
@@ -88,71 +105,123 @@ export default function Folders() {
         </button>
       </div>
 
+      {/* Folder Grid */}
       {folders.length === 0 ? (
         <div className="text-gray-400 italic">No folders yet</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {folders.map((folder) => (
-            <div key={folder.id} className="bg-zinc-100 dark:bg-zinc-600 p-4 rounded">
-              <div className="flex justify-between items-center">
-                <div className="flex gap-2 items-center cursor-pointer" onClick={() => toggleFolder(folder.id)}>
-                  <h2 className="font-semibold text-xl">{folder.name}</h2>
-                  <span>{expandedFolderId === folder.id ? "▾" : "▸"}</span>
-                </div>
-                <button
-                  className="text-red-600 font-bold"
-                  onClick={() => handleDeleteFolder(folder.id)}
-                >
-                  ✕
-                </button>
+         {folders.map((folder) => {
+  const isExpanded = expandedFolderId === folder.id;
+
+  return (
+    <div key={folder.id} className="flex flex-col">
+
+      {/* Header */}
+      <div
+        onClick={() => toggleFolder(folder.id)}
+        className="flex items-center justify-between px-3 py-2 cursor-pointer rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 transition"
+        style={{
+          boxShadow: `inset 4px 0 0 ${folder.color || "#6366f1"}`
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-lg">
+            {folder.emoji || "📁"}
+          </span>
+
+          <span className="font-medium">
+            {folder.name}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className={`transition ${isExpanded ? "rotate-90" : ""}`}>
+          ▶
+        </span>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingFolder(folder);
+            }}
+            className="text-xs text-blue-500 hover:underline"
+          >
+            Edit
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteFolder(folder.id);
+            }}
+            className="text-xs text-red-500 hover:underline"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      {/* Members */}
+      {isExpanded && (
+        <div className="ml-4 pl-3 border-l border-zinc-300 dark:border-zinc-700 space-y-1 mt-1">
+
+          {membersLoading ? (
+            <div className="text-sm opacity-60">Loading...</div>
+          ) : folderMembers[folder.id]?.length ? (
+            folderMembers[folder.id].map((m) => (
+              <div
+                key={m.id}
+                className="text-sm px-2 py-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-800 transition"
+              >
+                {m.display_name || m.name}
               </div>
-
-              {expandedFolderId === folder.id && (
-                <div className="mt-2 pl-4 border-l border-gray-300 dark:border-zinc-600 space-y-1">
-                  {membersLoading ? (
-                    <div>Loading members...</div>
-                  ) : folderMembers[folder.id]?.length ? (
-                    folderMembers[folder.id].map((m) => (
-                      <div key={m.id} className="p-1 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition">
-                        {m.display_name || m.name}
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-gray-400 italic">No members in this folder</div>
-                  )}
-
-                  <button
-                    className="mt-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
-                    onClick={() => { setSelectedFolderForAdd(folder.id); setShowAddMemberModal(true); }}
-                  >
-                    + Add Member
-                  </button>
-                </div>
-              )}
+            ))
+          ) : (
+            <div className="text-sm opacity-50 italic">
+              No members
             </div>
-          ))}
+          )}
+
+          <button
+            className="text-xs text-blue-500 mt-1 hover:underline"
+            onClick={() => {
+              setSelectedFolderForAdd(folder.id);
+              setShowAddMemberModal(true);
+            }}
+          >
+            + Add Member
+          </button>
+        </div>
+      )}
+    </div>
+  );
+})}
         </div>
       )}
 
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-zinc-800 p-6 rounded shadow-lg w-96 flex flex-col gap-4">
-            <h2 className="text-xl font-bold">Create New Folder</h2>
-            <input
-              type="text"
-              placeholder="Folder Name"
-              className="w-full px-3 py-2 rounded bg-zinc-200 dark:bg-zinc-700"
-              value={newFolderName}
-              onChange={(e) => setNewFolderName(e.target.value)}
-            />
-            <div className="flex justify-end gap-2">
-              <button className="px-3 py-1 rounded bg-gray-300 hover:bg-gray-400" onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button className="px-3 py-1 rounded bg-green-500 text-white hover:bg-green-600" onClick={handleCreateFolder}>Create</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Create Modal */}
+    <CreateFolderModal
+  isOpen={showCreateModal}
+  onClose={() => setShowCreateModal(false)}
+  onCreate={handleCreateFolder}
+/>
 
+      {/* Edit Modal */}
+      <EditFolderModal
+        folder={editingFolder}
+        onClose={() => setEditingFolder(null)}
+        onSave={async (updated) => {
+          await supabase
+            .from("folders")
+            .update(updated)
+            .eq("id", updated.id);
+
+          await loadFolders();
+          setEditingFolder(null);
+        }}
+      />
+
+      {/* Add Member Modal */}
       <AddMemberModal
         isOpen={showAddMemberModal}
         onClose={() => setShowAddMemberModal(false)}

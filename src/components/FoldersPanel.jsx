@@ -42,7 +42,7 @@ export default function FoldersPanel() {
               ) : (
                 folders.map((f) => (
                     <Link to={`/folders`} key={f.id}>
-                      <button>{f.name}</button>
+                      <button>{f.emoji}{f.name}</button>
                     </Link>
                 ))
               )}

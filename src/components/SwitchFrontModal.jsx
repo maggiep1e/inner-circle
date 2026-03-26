@@ -95,7 +95,7 @@ export default function SwitchFrontModal({ onClose }) {
             onClick={handleDone}
             className="flex-1 py-2 rounded bg-blue-500 text-white"
           >
-            Done ({selected.length})
+            Done
           </button>
         </div>
       </div>

@@ -15,9 +15,9 @@ export default function Sidebar() {
     { to: "/systems", label: "Systems" },
     { to: "/folders", label: "Folders" },
     { to: "/members", label: "Members" },
-    { to: "/friends", label: "Friends" },
+   // { to: "/friends", label: "Friends" },
     { to: "/system-journal", label: "System Journal" },
-    { to: "/member-journal", label: "Member Journals" },
+   // { to: "/member-journal", label: "Member Journals" },
     { to: "/import", label: "Import" },
     { to: "/user", label: "User Settings" },
   ];

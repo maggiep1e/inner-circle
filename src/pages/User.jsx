@@ -109,7 +109,6 @@ export default function UserSettingsPage() {
               className="w-full px-4 py-2 border rounded-lg dark:bg-gray-700"
             >
               <option value="free">Free</option>
-              <option value="paid">Paid</option>
             </select>
           </label>
         </div>

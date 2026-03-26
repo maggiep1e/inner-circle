@@ -11,6 +11,8 @@ export default function Members() {
   const members = useSystemStore((s) => s.members);
   const systemId = useSystemStore((s) => s.systemId);
 const systems = useSystemStore((s) => s.systems);
+const deleteMember = useSystemStore((s) => s.deleteMember);
+  const loadCurrentFront = useSystemStore((s) => s.loadCurrentFront);
 
 const system = useMemo(
   () => systems.find((sys) => sys.id === systemId),
@@ -45,7 +47,13 @@ const system = useMemo(
       </div>
 
       <div className="flex gap-4 mb-4">
-        <SearchBar value={search} onChange={(e) => setSearch(e.target.value)} />
+        <SearchBar
+  items={members}
+  onSelect={(member) => {
+    setSelected(member);
+    setModalMode("view");
+  }}
+/>
       </div>
 
       <div className="flex gap-4 mb-4">
@@ -70,19 +78,49 @@ const system = useMemo(
               >
                 <div className="font-semibold">{m.display_name || m.name}</div>
                 <div className="flex gap-2 mt-2">
-                  <button
-                    className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm flex-1"
-                    onClick={() => { setSelected(m); setModalMode("view"); }}
-                  >
-                    View
-                  </button>
-                  <button
-                    className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm flex-1"
-                    onClick={() => { setSelected(m); setModalMode("edit"); }}
-                  >
-                    Edit
-                  </button>
-                </div>
+  <button
+    className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm flex-1"
+    onClick={() => {
+      setSelected(m);
+      setModalMode("view");
+    }}
+  >
+    View
+  </button>
+
+  <button
+    className="px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 text-sm flex-1"
+    onClick={() => {
+      setSelected(m);
+      setModalMode("edit");
+    }}
+  >
+    Edit
+  </button>
+
+  {/* 🗑 DELETE */}
+  <button
+    className="px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+    onClick={() => {
+      const ok = window.confirm(
+        `Delete ${m.display_name || m.name}?`
+      );
+
+      if (!ok) return;
+
+      deleteMember(m.id);
+      loadCurrentFront();
+
+      // if currently viewing this member, close panel
+      if (selected?.id === m.id) {
+        setSelected(null);
+        setModalMode("closed");
+      }
+    }}
+  >
+    Delete
+  </button>
+</div>
               </div>
             ))}
           </div>
