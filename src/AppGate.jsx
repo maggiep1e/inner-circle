@@ -45,7 +45,6 @@ export default function AppGate() {
       setUser(userObj);
 
       try {
-        // ✅ 1. PROFILE (now handled by store)
         await loadProfile();
 
         // ensure local state is synced
@@ -59,7 +58,6 @@ export default function AppGate() {
           setProfileAvatarUrl(data.publicUrl);
         }
 
-        // ✅ 2. SYSTEMS (still in AppGate for now)
         const { data: systemsData } = await supabase
           .from("systems")
           .select("*")
@@ -69,7 +67,7 @@ export default function AppGate() {
         setSystems(systems);
 
         const avatars = {};
-        systems.forEach((s) => {
+        systems?.forEach((s) => {
           avatars[s.id] =
             supabase.storage.from("avatars").getPublicUrl(s.avatar).data
               .publicUrl || "/default-avatar.png";
@@ -77,7 +75,7 @@ export default function AppGate() {
 
         setSystemAvatarUrl(avatars);
 
-        if (systems.length > 0) {
+        if (systems?.length > 0) {
           setSystemId(systems[0].id);
         }
       } catch (err) {
