@@ -1,55 +1,62 @@
-// src/layout/TopBar.jsx
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useSessionStore } from "../store/sessionStore";
-import UserProfile from "../components/UserProfile"
+import { useProfileStore } from "../store/profileStore";
+import UserProfile from "../components/UserProfile";
 
 export default function TopBar() {
   const user = useSessionStore((s) => s.user);
-  const profile = useSessionStore((s) => s.profile);
-  const avatarUrl = useSessionStore((s) => s.profileAvatarUrl);
+  const profile = useProfileStore((s) => s.profile);
+  const avatarUrl = useProfileStore((s) => s.profileAvatarUrl);
   const logout = useSessionStore((s) => s.logout);
 
-  const [showProfilePage, setShowProfilePage] = useState(false);
+  const navigate = useNavigate();
+  const [showProfile, setShowProfile] = useState(false);
 
   if (!user) return null;
 
   return (
     <>
-      <div className="flex w-full justify-end p-4 space-x-2 bg-white dark:bg-zinc-800">
-        {/* Logout button */}
+      <div className="flex w-full items-center justify-end h-16 px-6 py-10 gap-3 bg-white dark:bg-zinc-800 border-b border-gray-200 dark:border-zinc-700">
+
+        {/* HOME BUTTON */}
+        <button
+          onClick={() => navigate("/")}
+          className="px-3 py-1 rounded bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300 dark:hover:bg-zinc-600 transition"
+        >
+          Home
+        </button>
+
+        {/* AVATAR */}
+        <button
+          onClick={() => setShowProfile(true)}
+          className="h-12 w-12 rounded-full overflow-hidden border hover:ring-2 hover:ring-blue-500 transition"
+        >
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="avatar"
+              className="rounded-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-400 text-white font-bold">
+              {profile?.display_name?.[0]?.toUpperCase() || "?"}
+            </div>
+          )}
+        </button>
+
+        {/* LOGOUT */}
         <button
           onClick={logout}
-          className="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600"
+          className="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600 transition"
         >
           Logout
         </button>
-
-        {/* Profile avatar */}
-        <div className="relative">
-          <button
-            className="w-12 h-12 rounded-full overflow-hidden border-0 p-0 hover:ring-2 hover:ring-blue-500 transition"
-            onClick={() => setShowProfilePage(true)}
-          >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="avatar"
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-400 text-white font-bold">
-                {profile?.display_name?.[0]?.toUpperCase() || "?"}
-              </div>
-            )}
-          </button>
-        </div>
       </div>
 
-      {/* Full-page profile */}
-      {showProfilePage && (
-        <UserProfile
-          onDone={() => setShowProfilePage(false)}
-        />
+      {/* PROFILE MODAL */}
+      {showProfile && (
+        <UserProfile onClose={() => setShowProfile(false)} />
       )}
     </>
   );

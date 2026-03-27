@@ -1,4 +1,6 @@
 import { supabase } from "../lib/supabase";
+import { uploadAvatarFromUrl } from "./avatar";
+
 
 export async function getMembers(systemId) {
   const { data, error } = await supabase
@@ -68,4 +70,65 @@ export async function deleteMember(id) {
 
   if (error) throw error;
   return data;
+}
+
+const normalize = (n) => (n || "").toLowerCase().trim();
+
+export async function importMembers({
+  systemId,
+  rawMembers = [],
+  existingMembers = [],
+}) {
+  if (!systemId) throw new Error("Missing systemId");
+  if (!rawMembers.length) throw new Error("No members to import");
+
+  const existingSet = new Set(
+    (existingMembers || []).map((m) =>
+      normalize(m.display_name || m.name)
+    )
+  );
+
+  const added = [];
+  const skipped = [];
+
+  for (const m of rawMembers) {
+    const name = normalize(m.display_name || m.name);
+
+    // skip duplicates
+    if (existingSet.has(name)) {
+      skipped.push({ ...m, reason: "duplicate" });
+      continue;
+    }
+
+    try {
+      // 1. upload avatar (optional safe fallback)
+      const avatarUrl = m.avatar_url
+        ? await uploadAvatarFromUrl(
+            m.avatar_url,
+            `${systemId}-${crypto.randomUUID()}`
+          )
+        : null;
+
+      // 2. create member in DB
+      const newMember = await createMember({
+        system_id: systemId,
+        name: m.name,
+        display_name: m.display_name,
+        color: m.color,
+        description: m.description,
+        avatar: avatarUrl,
+        pronouns: m.pronouns
+      });
+
+      added.push(newMember);
+
+      // 3. prevent duplicates within same batch
+      existingSet.add(name);
+    } catch (err) {
+      console.error("Import error:", err);
+      skipped.push({ ...m, reason: err.message });
+    }
+  }
+
+  return { added, skipped };
 }

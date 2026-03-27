@@ -13,19 +13,17 @@ export async function importFromExcel(file) {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(sheet);
 
-        const members = json.map((row) =>
-          normalizeMember(
-            {
-              name: row.name || row.Name,
-              display_name:
-                row.displayName ||
-                row["Display Name"] ||
-                row.Name ||
-                row.name,
-            },
-            "excel"
-          )
-        );
+        const members = json.map((row) => ({
+  source: "excel",
+
+  name: row.name || row.Name,
+  display_name: row.displayName || row["Display Name"] || row.name,
+
+  color: row.color || null,
+  description: row.description || null,
+  pronouns: row.pronouns || null,
+  avatar_url: row.avatar_url || null,
+}));
 
         resolve(members);
       } catch (err) {
@@ -37,7 +35,6 @@ export async function importFromExcel(file) {
     reader.readAsArrayBuffer(file);
   });
 }
-
 
 export async function importFromPluralKit(token) {
   if (!token) throw new Error("Missing PluralKit token");
@@ -61,17 +58,15 @@ export async function importFromPluralKit(token) {
 
   const members = await membersRes.json();
 
-  return members.map((m) =>
-    normalizeMember(
-      {
-        id: m.id,
-        name: m.name,
-        display_name: m.display_name || m.name,
-        avatar: m.avatar_url || null,
-        color: m.color || null,
-      },
-      "pluralkit"
-    )
-  );
-}
+  return members.map((m) => ({
+    source: "pluralkit",
 
+    name: m.name,
+    display_name: m.display_name || m.name,
+
+    color: m.color ?? null,
+    description: m.description ?? null,
+    pronouns: m.pronouns ?? null,
+    avatar_url: m.avatar_url ?? null,
+  }));
+}

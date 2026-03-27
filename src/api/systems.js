@@ -32,15 +32,22 @@ export async function updateSystem(id, updates) {
   return data;
 }
 
-export async function createSystem({ name, user_id }) {
-  if (!user_id) throw new Error("User ID is required to create a system");
-
-  const { data, error } = await supabase
+export async function createSystem(data) {
+  const { data: created, error } = await supabase
     .from("systems")
-    .insert([{ display_name: name, user_id }])
+    .insert([
+      {
+        name: data.name,
+        description: data.description,
+        color: data.color,
+        avatar: data.avatar, // 🔥 THIS MUST EXIST
+        user_id: data.user_id,
+      },
+    ])
     .select()
     .single();
 
   if (error) throw error;
-  return data;
+
+  return created;
 }

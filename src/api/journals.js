@@ -24,7 +24,7 @@ export async function createMemberJournal(data) {
     .insert([
       {
         ...data,
-        user_id: userData.user.id
+        user_id: userData.user.id,
       }
     ])
     .select()
@@ -40,7 +40,7 @@ export async function searchMemberJournal(memberId) {
   const { data, error } = await supabase
     .from("journals")
     .select("*")
-    .eq("member_id", memberId)
+    .eq("author_member_id", memberId)
     .order("created_at", { ascending: false });
 
   if (error) throw error;

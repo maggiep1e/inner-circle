@@ -77,3 +77,37 @@ export async function uploadAvatar(file, userId) {
   if (urlError) throw urlError;
   return urlData.publicUrl;
 }
+
+// --- Get profile by user id ---
+export async function getProfile(userId) {
+  if (!userId) throw new Error("User ID required");
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+
+// --- Create OR update profile (recommended) ---
+export async function upsertProfile(profile) {
+  if (!profile?.id) throw new Error("Profile must have an id");
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .upsert(profile, { onConflict: "id" })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+
+
+
+

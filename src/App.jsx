@@ -2,14 +2,17 @@
 import { Routes, Route } from "react-router-dom";
 import { useSessionStore } from "./store/sessionStore";
 
-import Dashboard from "./pages/Dashboard";
-import Members from "./pages/Members";
+
+import SystemsPage from "./pages/Systems";
+import SystemView from "./pages/SystemView";
+import SystemCreate from "./pages/SystemCreate";
+import MemberCreate from "./pages/MemberCreate";
+import MemberView from "./pages/MemberView";
+import CreateFolder from "./pages/CreateFolder";
+import EditFolder from "./pages/EditFolder";
+
 import Friends from "./pages/Friends";
-import Systems from "./pages/Systems";
-import Folders from "./pages/Folders";
-import Analytics from "./pages/Analytics";
 import SystemJournal from "./pages/SystemJournal";
-import MemberJournal from "./pages/MemberJournal";
 import UserSettings from "./pages/User";
 import ImportMembersPage from "./pages/ImportMembersPage";
 import Auth from "./pages/auth";
@@ -33,15 +36,16 @@ export default function App() {
           </>
         ) : (
           <>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/members" element={<Members />} />
+            <Route path="/" element={<SystemsPage />} />
             <Route path="/friends" element={<Friends />} />
-            <Route path="/systems" element={<Systems />} />
-            <Route path="/folders" element={<Folders />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/system-journal" element={<SystemJournal />} />
-            <Route path="/member-journal" element={<MemberJournal />} />
-            <Route path="/import" element={<ImportMembersPage />} />
+            <Route path="/systems/new" element={<SystemCreate />} />
+            <Route path="/systems/:id" element={<SystemView />} />
+            <Route path="/systems/:systemId/members/new" element={<MemberCreate />}/>
+            <Route path="/systems/:systemId/members/:memberId" element={<MemberView />} />
+            <Route path="/systems/:systemId/folders/new" element={<CreateFolder />}/>
+            <Route  path="/systems/:systemId/folders/:folderId/edit"  element={<EditFolder />}/>
+            <Route  path="/systems/:systemId/journal"  element={<SystemJournal />}/>
+            <Route path="/import/:systemId" element={<ImportMembersPage />} />
             <Route path="/user" element={<UserSettings />} />
             <Route path="*" element={<Navigate to="/" />} />
           </>

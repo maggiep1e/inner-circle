@@ -4,10 +4,13 @@ import {
   importFromExcel,
   importFromPluralKit,
 } from "../utils/memberImportAdapters";
+import { useParams, useNavigate } from "react-router-dom";
+import { importMembers } from "../api/members";
 
 export default function ImportMembersPage() {
-  const systemId = useSystemStore((s) => s.systemId);
-  const addMember = useSystemStore((s) => s.addMember);
+  const { systemId } = useParams();
+  const navigate = useNavigate();
+
   const existingMembers = useSystemStore((s) => s.members);
 
   const [step, setStep] = useState(1);
@@ -25,85 +28,69 @@ export default function ImportMembersPage() {
     skipped: [],
   });
 
-  const normalize = (n) => (n || "").toLowerCase().trim();
-
+  // -----------------------------
+  // LOAD SOURCE DATA
+  // -----------------------------
   const loadData = async () => {
-  setLoading(true);
-
-  try {
-    let members = [];
-
-    if (source === "excel") {
-      members = await importFromExcel(file);
-    }
-
-    if (source === "pluralkit") {
-      members = await importFromPluralKit(apiKey);
-    }
-    setRawMembers(members);
-    setStep(2);
-  } catch (err) {
-    console.error(err);
-    alert(err.message || "Failed to load members");
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const runImport = async () => {
-    if (!systemId) return alert("No system selected");
-    if (!rawMembers.length) return alert("No members to import");
-
-    setStep(3);
     setLoading(true);
 
-    const added = [];
-    const skipped = [];
+    try {
+      let members = [];
 
-    const existingSet = new Set(
-  (existingMembers || []).map((m) =>
-    normalize(m.display_name || m.name)
-  )
-);
-
-    setProgress({ completed: 0, total: rawMembers.length });
-
-    for (let i = 0; i < rawMembers.length; i++) {
-      const m = rawMembers[i];
-      const name = normalize(m.display_name || m.name);
-
-      if (existingSet.has(name)) {
-        skipped.push(m);
-      } else {
-        try {
-          const newMember = await addMember({
-            system_id: systemId,
-            name: m.name,
-            display_name: m.display_name,
-            color: m.color,
-            description: m.decription,
-            avatar: m.avatar_url
-          });
-
-          added.push(newMember);
-        } catch (err) {
-          console.error(err);
-          skipped.push(m);
-        }
+      if (source === "excel") {
+        members = await importFromExcel(file);
       }
 
-      setProgress({ completed: i + 1, total: rawMembers.length });
-    }
+      if (source === "pluralkit") {
+        members = await importFromPluralKit(apiKey);
+      }
 
-    setResults({ added, skipped });
-    setLoading(false);
-    setStep(4);
+      setRawMembers(members);
+      setStep(2);
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Failed to load members");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // -----------------------------
+  // IMPORT (CLEAN + CENTRALIZED)
+  // -----------------------------
+  const runImport = async () => {
+    setStep(3);
+    setLoading(true);
+    setProgress({ completed: 0, total: rawMembers.length });
+
+    try {
+      const { added, skipped } = await importMembers({
+        systemId,
+        rawMembers,
+        existingMembers,
+        onProgress: setProgress, // optional upgrade (see below)
+      });
+
+      setResults({ added, skipped });
+      setStep(4);
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+      setStep(2);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // -----------------------------
+  // UI
+  // -----------------------------
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
 
-      <h1 className="text-2xl font-bold">Import Members</h1>
+      <div className="text-sm text-zinc-500">
+        Importing into system: <b>{systemId}</b>
+      </div>
 
       {/* STEP INDICATOR */}
       <div className="flex gap-2 text-sm">
@@ -119,7 +106,7 @@ export default function ImportMembersPage() {
         ))}
       </div>
 
-      {/* STEP 1: SOURCE */}
+      {/* STEP 1 */}
       {step === 1 && (
         <div className="space-y-4">
           <select
@@ -158,7 +145,7 @@ export default function ImportMembersPage() {
         </div>
       )}
 
-      {/* STEP 2: PREVIEW */}
+      {/* STEP 2 */}
       {step === 2 && (
         <div className="space-y-4">
           <h2 className="font-semibold">
@@ -191,7 +178,7 @@ export default function ImportMembersPage() {
         </div>
       )}
 
-      {/* STEP 3: IMPORTING */}
+      {/* STEP 3 */}
       {step === 3 && (
         <div>
           <div className="w-full bg-gray-200 h-4 rounded overflow-hidden">
@@ -199,8 +186,8 @@ export default function ImportMembersPage() {
               className="bg-green-500 h-4 transition-all"
               style={{
                 width: progress.total
-  ? `${(progress.completed / progress.total) * 100}%`
-  : "0%",
+                  ? `${(progress.completed / progress.total) * 100}%`
+                  : "0%",
               }}
             />
           </div>
@@ -211,7 +198,7 @@ export default function ImportMembersPage() {
         </div>
       )}
 
-      {/* STEP 4: RESULTS */}
+      {/* STEP 4 */}
       {step === 4 && (
         <div className="space-y-4">
           <h2 className="font-semibold text-green-600">
