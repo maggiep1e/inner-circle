@@ -71,34 +71,59 @@ export async function deleteMember(id) {
   if (error) throw error;
   return data;
 }
+const normalize = (n) => (n || "").toLowerCase().trim();
 
+const isSameMember = (a, b) => {
+  return (
+    normalize(a.display_name || a.name) ===
+      normalize(b.display_name || b.name) &&
+    normalize(a.description) === normalize(b.description) &&
+    normalize(a.pronouns) === normalize(b.pronouns) &&
+    normalize(a.avatar || a.avatar_url) ===
+      normalize(b.avatar || b.avatar_url)
+  );
+};
 
 export async function importMembers({
   systemId,
   rawMembers = [],
   existingMembers = [],
-  onProgress
+  onProgress,
 }) {
   if (!systemId) throw new Error("Missing systemId");
   if (!rawMembers.length) throw new Error("No members to import");
 
-  const existingSet = new Set(
-    (existingMembers || []).map((m) =>
-      normalize(m.display_name || m.name)
-    )
-  );
-
   const added = [];
   const skipped = [];
-let completed = 0;
 
-for (const m of rawMembers) {
-  const name = normalize(m.display_name || m.name);
+  let completed = 0;
 
-  try {
-    if (existingSet.has(name)) {
-      skipped.push({ ...m, reason: "duplicate" });
-    } else {
+  const seen = [];
+
+  for (const m of rawMembers) {
+    try {
+  
+      const duplicateExisting = existingMembers.some((e) =>
+        isSameMember(e, m)
+      );
+
+      if (duplicateExisting) {
+        skipped.push({ ...m, reason: "identical duplicate" });
+        completed++;
+        onProgress({ completed, total: rawMembers.length });
+        continue;
+      }
+
+   
+      const duplicateBatch = seen.some((s) => isSameMember(s, m));
+
+      if (duplicateBatch) {
+        skipped.push({ ...m, reason: "duplicate in import file" });
+        completed++;
+        onProgress({ completed, total: rawMembers.length });
+        continue;
+      }
+
       let avatarUrl = null;
 
       if (m.avatar_url) {
@@ -119,19 +144,19 @@ for (const m of rawMembers) {
         color: m.color,
         description: m.description,
         avatar: avatarUrl,
-        pronouns: m.pronouns
+        pronouns: m.pronouns,
       });
 
       added.push(newMember);
-      existingSet.add(name);
-    }
-  } catch (err) {
-    console.error("Import error:", err);
-    skipped.push({ ...m, reason: err.message });
-  }
+      seen.push(m); 
 
-  completed++;
-  onProgress({ completed, total: rawMembers.length });
+    } catch (err) {
+      console.error("Import error:", err);
+      skipped.push({ ...m, reason: err.message });
+    }
+
+    completed++;
+    onProgress({ completed, total: rawMembers.length });
   }
 
   return { added, skipped };
