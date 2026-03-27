@@ -47,7 +47,6 @@ export default function Auth() {
             mode,
             plan: "free",
           });
-          navigate('/user')
         }
       }
     } catch (err) {
@@ -77,7 +76,6 @@ export default function Auth() {
           mode: "system",
           plan: "free",
         });
-        navigate('/user')
       }
     } catch (err) {
       setError(err.message || "OAuth login failed");
