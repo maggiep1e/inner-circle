@@ -12,6 +12,7 @@ export default function ImportMembersPage() {
   const navigate = useNavigate();
 
   const existingMembers = useSystemStore((s) => s.members);
+  const system = useSystemStore((s) => s.currentSystem)
 
   const [step, setStep] = useState(1);
   const [source, setSource] = useState("");
@@ -89,7 +90,7 @@ export default function ImportMembersPage() {
     <div className="max-w-3xl mx-auto p-6 space-y-6">
 
       <div className="text-sm text-zinc-500">
-        Importing into system: <b>{systemId}</b>
+        Importing into system: <b>{system.name}</b>
       </div>
 
       {/* STEP INDICATOR */}

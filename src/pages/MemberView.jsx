@@ -92,7 +92,7 @@ export default function MemberView() {
   }
 
   return (
-      <div className="p-6 w-1/2 space-y-8">
+      <div className="md:p-6 md:w-1/2 space-y-8">
 
         {/* BACK */}
         <button onClick={() => navigate(-1)}>

@@ -302,14 +302,14 @@ export default function SystemView() {
           }
         />
 
-        <div className="grid grid-cols-2 gap-2 mt-3">
+        <div className="gap-2 mt-3">
           {sortedMembers.map((m) => {
             const isFront = currentFront.includes(m.id);
 
             return (
               <div
                 key={m.id}
-                className={`flex items-center gap-2 p-2 border rounded cursor-pointer ${
+                className={`flex flex-wrap md:w-1/3 items-center gap-2 p-2 border rounded cursor-pointer ${
                   isFront ? "border-green-500 bg-green-50 dark:bg-green-900/20" : ""
                 }`}
                 onClick={() =>
