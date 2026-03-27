@@ -63,13 +63,14 @@ export default function ImportMembersPage() {
     setStep(3);
     setLoading(true);
     setProgress({ completed: 0, total: rawMembers.length });
+    console.log('uploading')
 
     try {
       const { added, skipped } = await importMembers({
         systemId,
         rawMembers,
         existingMembers,
-        onProgress: setProgress, // optional upgrade (see below)
+        onProgress: setProgress,
       });
 
       setResults({ added, skipped });

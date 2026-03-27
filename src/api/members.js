@@ -78,6 +78,7 @@ export async function importMembers({
   systemId,
   rawMembers = [],
   existingMembers = [],
+  onProgress
 }) {
   if (!systemId) throw new Error("Missing systemId");
   if (!rawMembers.length) throw new Error("No members to import");
@@ -121,6 +122,7 @@ export async function importMembers({
       });
 
       added.push(newMember);
+      onProgress({completed: added.length, total: rawMembers.length })
 
       // 3. prevent duplicates within same batch
       existingSet.add(name);
