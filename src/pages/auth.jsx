@@ -8,6 +8,7 @@ import {
 } from "../lib/auth";
 import { createProfile, getProfiles } from "../api/profiles";
 import { supabase } from "../lib/supabase";
+import { useNavigate } from "react-router-dom";
 
 export default function Auth() {
   const [email, setEmail] = useState("");
@@ -15,6 +16,7 @@ export default function Auth() {
   const [logon, setLogon] = useState("login"); // "login" or "register"
   const [error, setError] = useState("");
   const [mode, setMode] = useState("system"); // "system" or "singlet"
+  const navigate = useNavigate()
 
   // --- Email / Password login / register ---
   async function handleSubmit() {
@@ -45,6 +47,7 @@ export default function Auth() {
             mode,
             plan: "free",
           });
+          navigate('/user')
         }
       }
     } catch (err) {
@@ -74,6 +77,7 @@ export default function Auth() {
           mode: "system",
           plan: "free",
         });
+        navigate('/user')
       }
     } catch (err) {
       setError(err.message || "OAuth login failed");
