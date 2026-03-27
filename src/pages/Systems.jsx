@@ -12,6 +12,7 @@ export default function SystemsPage() {
 
   const systems = useSystemStore((s) => s.systems);
   const loadSystems = useSystemStore((s) => s.loadSystems);
+  const setSystemId = useSystemStore((s) => s.setSystemId)
 
   useEffect(() => {
     loadSystems();
@@ -37,7 +38,7 @@ export default function SystemsPage() {
         {systemsWithAvatars.map((sys) => (
         <div
           key={sys.id}
-          onClick={() => navigate(`/systems/${sys.id}`)}
+          onClick={() => {setSystemId(sys.id); navigate(`/systems/${sys.id}`)}}
           className="p-3 rounded cursor-pointer shadow-sm hover:opacity-90 transition flex flex-col gap-2"
           style={{ backgroundColor: sys.color || "#ffffff" }}
         >
