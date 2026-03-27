@@ -72,7 +72,6 @@ export async function deleteMember(id) {
   return data;
 }
 
-const normalize = (n) => (n || "").toLowerCase().trim();
 
 export async function importMembers({
   systemId,
@@ -91,26 +90,28 @@ export async function importMembers({
 
   const added = [];
   const skipped = [];
+let completed = 0;
 
-  for (const m of rawMembers) {
-    const name = normalize(m.display_name || m.name);
+for (const m of rawMembers) {
+  const name = normalize(m.display_name || m.name);
 
-    // skip duplicates
+  try {
     if (existingSet.has(name)) {
       skipped.push({ ...m, reason: "duplicate" });
-      continue;
-    }
+    } else {
+      let avatarUrl = null;
 
-    try {
-      // 1. upload avatar (optional safe fallback)
-      const avatarUrl = m.avatar_url
-        ? await uploadAvatarFromUrl(
+      if (m.avatar_url) {
+        try {
+          avatarUrl = await uploadAvatarFromUrl(
             m.avatar_url,
             `${systemId}-${crypto.randomUUID()}`
-          )
-        : null;
+          );
+        } catch (err) {
+          console.warn("Avatar failed, continuing...");
+        }
+      }
 
-      // 2. create member in DB
       const newMember = await createMember({
         system_id: systemId,
         name: m.name,
@@ -122,14 +123,15 @@ export async function importMembers({
       });
 
       added.push(newMember);
-      onProgress({completed: added.length, total: rawMembers.length })
-
-      // 3. prevent duplicates within same batch
       existingSet.add(name);
-    } catch (err) {
-      console.error("Import error:", err);
-      skipped.push({ ...m, reason: err.message });
     }
+  } catch (err) {
+    console.error("Import error:", err);
+    skipped.push({ ...m, reason: err.message });
+  }
+
+  completed++;
+  onProgress({ completed, total: rawMembers.length });
   }
 
   return { added, skipped };
