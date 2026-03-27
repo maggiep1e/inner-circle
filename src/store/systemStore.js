@@ -107,6 +107,19 @@ setSystemAvatarUrl: (id, url) =>
     }
   },
 
+  setCurrentSystem: async (id) => {
+    const system = get().systems.find((s) => s.id === id);
+
+    set({
+      systemId: id,
+      currentSystem: system || null,
+    });
+
+    if (id) {
+      await get().loadMembers(id);
+    }
+  },
+
 addSystem: async (data) => {
   console.log("ADDING SYSTEM:", data);
 

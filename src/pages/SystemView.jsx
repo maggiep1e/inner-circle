@@ -9,14 +9,17 @@ import {
   getMembersByFolder,
   deleteFolder,
 } from "../api/folders";
+import { useParams } from "react-router-dom";
 
 export default function SystemView() {
   const navigate = useNavigate();
+  const systemId = useParams();
 
   const currentSystem = useSystemStore((s) => s.currentSystem);
   const members = useSystemStore((s) => s.members);
   const folders = useSystemStore((s) => s.systemFolders);
   const currentFront = useSystemStore((s) => s.currentFront || []);
+  const setCurrentSystem = useSystemStore((s) => s.setCurrentSystem)
 
   const loadMembers = useSystemStore((s) => s.loadMembers);
   const loadFolders = useSystemStore((s) => s.loadFolders);
@@ -30,7 +33,7 @@ export default function SystemView() {
   // LOAD
   // -----------------------------
   useEffect(() => {
-    if (!currentSystem?.id) return;
+    if (!currentSystem?.id) setCurrentSystem(systemId);
     loadMembers(currentSystem.id);
     loadFolders();
   }, [currentSystem?.id]);

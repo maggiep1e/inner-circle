@@ -51,15 +51,19 @@ export default function SystemCreate() {
   // -----------------------------
   const handleCreate = async () => {
     if (!user?.id) return;
-
+ 
+    try {
     const created = await addSystem({
       ...form,
       user_id: user.id,
       display_name: form.name,
       created_at: new Date().toISOString(),
     });
+  } catch {
+      console.error("System Create failed:", err);
+  } finally {
 
-    navigate(`/systems/${created.id}`);
+    navigate(`/`);}
   };
 
   return (
@@ -76,13 +80,13 @@ export default function SystemCreate() {
             src={avatarPreview || "/default-avatar.png"}
             className="w-20 h-20 rounded-full object-cover border"
           />
-
+          <button>
           <input
             type="file"
             accept="image/*"
             onChange={handleAvatarChange}
             disabled={uploading}
-          />
+          /></button>
 
           {uploading && (
             <p className="text-xs text-blue-500">Uploading...</p>
