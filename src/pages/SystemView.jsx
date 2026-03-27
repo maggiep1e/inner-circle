@@ -267,9 +267,10 @@ export default function SystemView() {
 
                     {/* add member */}
                     <div className="border-t pt-2">
-                      <p className="text-xs mb-2 opacity-60">
+                      <p className="text-m mb-2">
                         Add member:
                       </p>
+  
 
                       <SearchBar
                         items={members.filter(
@@ -290,11 +291,15 @@ export default function SystemView() {
 
       {/* ================= ALL MEMBERS ================= */}
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow p-4">
-
+          <div className="flex justify-between items-center mb-3 ">
         <h2 className="font-semibold mb-2">
           All Members ({members.length})
         </h2>
 
+        <button className="" onClick={() => navigate(`/systems/${currentSystem.id}/members/new`)}>
+          Add member:
+        </button>
+        </div>
         <SearchBar
           items={members}
           placeholder="Search members..."

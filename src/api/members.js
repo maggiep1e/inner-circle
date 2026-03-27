@@ -141,7 +141,7 @@ export async function importMembers({
         system_id: systemId,
         name: m.name,
         display_name: m.display_name,
-        color: m.color,
+        color: `#${m.color}`,
         description: m.description,
         avatar: avatarUrl,
         pronouns: m.pronouns,

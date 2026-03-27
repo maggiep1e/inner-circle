@@ -17,6 +17,7 @@ export default function MemberCreate() {
     display_name: "",
     pronouns: "",
     avatar: "",
+    color: ""
   });
 
   const [avatarPreview, setAvatarPreview] = useState(null);
@@ -118,6 +119,17 @@ export default function MemberCreate() {
           }
           className="p-2 w-full border rounded"
         />
+
+               <div>
+          <p className="text-zinc-400 text-sm mb-1">Color</p>
+          <input
+            type="color"
+            value={form.color}
+            onChange={(e) =>
+              setForm({ ...form, color: e.target.value })
+            }
+          />
+        </div>
 
         {/* Submit */}
         <button
