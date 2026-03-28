@@ -16,6 +16,7 @@ export default function AppGate() {
   const loadProfile = useProfileStore((s) => s.loadProfile);
   const setProfile = useProfileStore((s) => s.setProfile);
   const setProfileAvatarUrl = useProfileStore((s) => s.setProfileAvatarUrl);
+  const ensureCurrentSystem = useSystemStore((s) => s.ensureCurrentSystem)
 
   const loadSystems = useSystemStore((s) => s.loadSystems);
 
@@ -69,7 +70,9 @@ export default function AppGate() {
       mounted = false;
       listener.subscription.unsubscribe();
     };
-  }, [setUser, loadProfile, setProfile, setProfileAvatarUrl, loadSystems]);
+
+    ensureCurrentSystem();
+  }, [setUser, loadProfile, setProfile, setProfileAvatarUrl, loadSystems, ensureCurrentSystem]);
 
   // ---------------- UI WRAPPER ----------------
   const Layout = ({ children }) => (

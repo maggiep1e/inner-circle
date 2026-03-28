@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { uploadFile, getPublicUrl } from "../api/avatar";
+import { useSystemStore } from "../store/systemStore";
 
 export default function SystemForm({
   initialData = {},
@@ -17,16 +18,21 @@ export default function SystemForm({
   const [uploading, setUploading] = useState(false);
 
   // hydrate edit mode
-  useEffect(() => {
-    setForm({
-      name: initialData.name || "",
-      description: initialData.description || "",
-      color: initialData.color || "#ffffff",
-      avatar: initialData.avatar || "",
-    });
+useEffect(() => {
+  setForm({
+    name: initialData?.name || "",
+    description: initialData?.description || "",
+    color: initialData?.color || "#ffffff",
+    avatar: initialData?.avatar || "",
+  });
 
-    setAvatarUrl(getPublicUrl(initialData.avatar));
-  }, [initialData]);
+  const avatarPath = initialData?.avatar;
+
+  setAvatarUrl(
+    avatarPath ? getPublicUrl(avatarPath) : null
+  );
+}, [initialData]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;

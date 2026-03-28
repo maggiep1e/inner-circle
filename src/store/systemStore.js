@@ -124,6 +124,26 @@ export const useSystemStore = create((set, get) => ({
     return system;
   },
 
+  ensureCurrentSystem: async () => {
+  const state = get();
+
+  // already valid
+  if (state.currentSystem?.id) return;
+
+  // wait until systems exist
+  if (!state.systems?.length) return;
+
+  const first = state.systems[0];
+
+  if (!first) return;
+
+  set({ currentSystem: first });
+
+  // optionally hydrate everything
+  await state.loadMembers?.(first.id);
+  await state.loadCurrentFront?.(first.id);
+  await state.loadFolders?.(first.id);
+},
   // --------------------
   // MEMBERS (PURE)
   // --------------------
@@ -192,35 +212,44 @@ export const useSystemStore = create((set, get) => ({
   // --------------------
   // FRONT SYSTEM
   // --------------------
-  setFront: async (memberIds) => {
-    const systemId = get().systemId;
-    if (!systemId) return;
+setFront: async (systemId, memberIds) => {
+  if (!systemId) return;
 
-    const inserts = memberIds.map((id) => ({
-      system_id: systemId,
-      member_id: id,
-    }));
+  // 🔥 HARD SAFETY CHECK
+  const safeIds = Array.isArray(memberIds) ? memberIds : [];
 
-    await supabase.from("front_logs").insert(inserts);
+  await supabase
+    .from("systems")
+    .update({ current_front: safeIds })
+    .eq("id", systemId);
 
-    set({ currentFront: memberIds });
-  },
+  set({ currentFront: safeIds });
+},
+  // ensures front always belongs to system
+loadCurrentFront: async (systemId) => {
+  if (!systemId) return;
 
-  loadCurrentFront: async (systemId) => {
-    const id = systemId || get().systemId;
-    if (!id) return;
+  const { data, error } = await supabase
+    .from("systems")
+    .select("current_front")
+    .eq("id", systemId)
+    .single();
 
-    const { data, error } = await supabase
-      .from("front_logs")
-      .select("member_id")
-      .eq("system_id", id);
+  if (error) throw error;
 
-    if (error) return console.error(error);
+  set({
+    currentFront: data?.current_front || [],
+  });
+},
 
-    set({
-      currentFront: (data || []).map((f) => f.member_id),
-    });
-  },
+setCurrentFront: async (systemId, memberIds) => {
+  await supabase
+    .from("systems")
+    .update({ current_front: memberIds })
+    .eq("id", systemId);
+
+  set({ currentFront: memberIds });
+},
 
   toggleFront: async (memberId) => {
     const current = get().currentFront;

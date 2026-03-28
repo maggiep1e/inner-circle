@@ -1,10 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSystemStore } from "../store/systemStore";
-import CurrentFront from "../components/CurrentFront";
-import Card from "../components/Card";
 import { useProfileStore } from "../store/profileStore";
 import { useSessionStore } from "../store/sessionStore";
+import { getPublicUrl } from "../api/avatar";
+
+import CurrentFront from "../components/CurrentFront";
+import Card from "../components/Card";
 
 export default function SystemsPage() {
   const navigate = useNavigate();
@@ -14,14 +16,14 @@ export default function SystemsPage() {
   // -----------------------------
   const systems = useSystemStore((s) => s.systems);
   const loadSystems = useSystemStore((s) => s.loadSystems);
-
   const hydrateSystem = useSystemStore((s) => s.hydrateSystem);
+  const ensureCurrentSystem = useSystemStore((s) => s.ensureCurrentSystem);
 
   const profile = useProfileStore((s) => s.profile);
   const userId = useSessionStore((s) => s.userId);
 
   // -----------------------------
-  // INIT (FIXED: no loop / no double fetch)
+  // LOAD SYSTEMS
   // -----------------------------
   useEffect(() => {
     if (!userId) return;
@@ -29,54 +31,73 @@ export default function SystemsPage() {
   }, [userId, loadSystems]);
 
   // -----------------------------
+  // AUTO-SELECT FIRST SYSTEM
+  // -----------------------------
+  useEffect(() => {
+    if (!systems?.length) return;
+
+    ensureCurrentSystem();
+  }, [systems, ensureCurrentSystem]);
+
+  // -----------------------------
+  // HELPERS
+  // -----------------------------
+  const getAvatar = (path) =>
+    path ? getPublicUrl(path) : "/default-avatar.png";
+
+  // -----------------------------
   // UI
   // -----------------------------
   return (
-    <div className="flex flex-wrap md:no-wrap gap-6 p-4">
+    <div className="flex flex-wrap md:flex-nowrap gap-6 p-4">
 
-      {/* ================= CURRENT FRONT ================= */}
+      {/* CURRENT FRONT */}
       <CurrentFront />
 
-      {/* ================= SYSTEMS LIST ================= */}
+      {/* SYSTEMS LIST */}
       <div className="w-84 space-y-3">
         <Card>
           <h2 className="text-xl font-bold p-2">Systems</h2>
 
-          {systems?.map((sys) => (
-            <div
-              key={sys.id}
-              onClick={() => {
-                hydrateSystem(sys.id);
-                navigate(`/systems/${sys.id}`);
-              }}
-              className="p-3 rounded cursor-pointer shadow-sm hover:opacity-90 transition flex flex-col gap-2"
-              style={{ backgroundColor: sys.color || "#ffffff" }}
-            >
-              {/* TOP ROW */}
-              <div className="flex items-center gap-3">
-                <img
-                  src={sys.avatarUrl || "/default-avatar.png"}
-                  alt="system avatar"
-                  className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-900"
-                />
+          {systems?.map((sys) => {
+            const avatar = getAvatar(sys.avatar);
 
-                <div className="font-semibold text-sm">
-                  {sys.name || "Unnamed System"}
-                </div>
-              </div>
-
-              {/* ACTIONS */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/systems/${sys.id}/journal`);
+            return (
+              <div
+                key={sys.id}
+                onClick={() => {
+                  hydrateSystem(sys.id);
+                  navigate(`/systems/${sys.id}`);
                 }}
-                className="text-xs underline text-left"
+                className="p-3 rounded cursor-pointer shadow-sm hover:opacity-90 transition flex flex-col gap-2"
+                style={{ backgroundColor: sys.color || "#ffffff" }}
               >
-                System Journal
-              </button>
-            </div>
-          ))}
+                {/* TOP ROW */}
+                <div className="flex items-center gap-3">
+                  <img
+                    src={avatar}
+                    alt="system avatar"
+                    className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-900"
+                  />
+
+                  <div className="font-semibold text-sm">
+                    {sys.name || "Unnamed System"}
+                  </div>
+                </div>
+
+                {/* ACTION */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/systems/${sys.id}/journal`);
+                  }}
+                  className="text-xs underline text-left"
+                >
+                  System Journal
+                </button>
+              </div>
+            );
+          })}
 
           <button
             onClick={() => navigate("/systems/new")}
@@ -87,12 +108,16 @@ export default function SystemsPage() {
         </Card>
       </div>
 
-      {/* ================= SETTINGS ================= */}
+      {/* SETTINGS */}
       <Card>
         <h2 className="text-xl font-bold p-2">Settings</h2>
 
         <img
-          src={profile?.avatarUrl || "/default-avatar.png"}
+          src={
+            profile?.avatar
+              ? getPublicUrl(profile.avatar)
+              : "/default-avatar.png"
+          }
           onClick={() => navigate("/user")}
           className="w-24 h-24 rounded-full object-cover shadow cursor-pointer"
         />

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { uploadFile, getPublicUrl } from "../api/avatar";
+import { uploadFile } from "../api/avatar";
+import { getPublicUrl } from "../api/avatar";
 
 export default function MemberForm({
   initialData = {},
@@ -21,9 +22,11 @@ export default function MemberForm({
   const [tagInput, setTagInput] = useState("");
 
   // -----------------------------
-  // hydrate edit mode
+  // HYDRATE EDIT MODE
   // -----------------------------
   useEffect(() => {
+    if (!initialData) return;
+
     setForm({
       name: initialData.name || "",
       display_name: initialData.display_name || "",
@@ -34,10 +37,11 @@ export default function MemberForm({
       tags: initialData.tags || [],
     });
 
-    setAvatarUrl(initialData.avatar)});
+    setAvatarUrl(getPublicUrl(initialData.avatar) || null);
+  }, [initialData]);
 
   // -----------------------------
-  // avatar upload
+  // AVATAR UPLOAD
   // -----------------------------
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -62,7 +66,7 @@ export default function MemberForm({
   };
 
   // -----------------------------
-  // field updates
+  // FIELD UPDATE (FIXED)
   // -----------------------------
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -74,7 +78,7 @@ export default function MemberForm({
   };
 
   // -----------------------------
-  // tags
+  // TAGS
   // -----------------------------
   const addTag = () => {
     if (!tagInput.trim()) return;
@@ -95,35 +99,38 @@ export default function MemberForm({
   };
 
   // -----------------------------
-  // submit
+  // SUBMIT
   // -----------------------------
   const handleSubmit = () => {
     onSubmit(form);
   };
 
+  // -----------------------------
+  // UI
+  // -----------------------------
   return (
     <div className="space-y-4">
 
-      {/* ---------------- AVATAR ---------------- */}
+      {/* AVATAR */}
       <div className="flex flex-col items-center gap-2">
         <img
           src={avatarUrl || "/default-avatar.png"}
           className="w-20 h-20 rounded-full object-cover border"
         />
-
+  <button>
         <input
           type="file"
           accept="image/*"
           onChange={handleAvatarUpload}
           disabled={uploading}
-        />
+        /></button>
 
         {uploading && (
           <p className="text-xs text-blue-500">Uploading...</p>
         )}
       </div>
 
-      {/* ---------------- BASIC INFO ---------------- */}
+      {/* BASIC INFO */}
       <input
         name="name"
         value={form.name}
@@ -148,7 +155,7 @@ export default function MemberForm({
         className="w-full border p-2 rounded"
       />
 
-      {/* ---------------- DESCRIPTION ---------------- */}
+      {/* DESCRIPTION */}
       <textarea
         name="description"
         value={form.description}
@@ -157,7 +164,7 @@ export default function MemberForm({
         className="w-full border p-2 rounded h-24"
       />
 
-      {/* ---------------- COLOR ---------------- */}
+      {/* COLOR */}
       <div className="flex items-center gap-2">
         <label className="text-sm">Color:</label>
 
@@ -170,7 +177,7 @@ export default function MemberForm({
         />
       </div>
 
-      {/* ---------------- TAGS ---------------- */}
+      {/* TAGS */}
       <div className="space-y-2">
 
         <div className="flex gap-2">
@@ -204,7 +211,7 @@ export default function MemberForm({
 
       </div>
 
-      {/* ---------------- SUBMIT ---------------- */}
+      {/* SUBMIT */}
       <button
         onClick={handleSubmit}
         disabled={uploading || submitting}
