@@ -46,7 +46,7 @@ useEffect(() => {
 
 
 const systemAvatar =
-  currentSystem.avatarUrl || "/default-avatar.png";
+  currentSystem?.avatarUrl || "/default-avatar.png";
   // -----------------------------
   // SORT MEMBERS (FRONT FIRST)
   // -----------------------------
