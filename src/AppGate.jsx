@@ -45,7 +45,7 @@ export default function AppGate() {
       setUser(userObj);
 
       try {
-        await loadProfile();
+        loadProfile();
 
         // ensure local state is synced
         const profile = useProfileStore.getState().profile;
@@ -58,7 +58,7 @@ export default function AppGate() {
           setProfileAvatarUrl(data?.publicUrl);
         }
 
-        const { data: systemsData } = await supabase
+        const { data: systemsData } = supabase
           .from("systems")
           .select("*")
           .eq("user_id", userObj?.id);
