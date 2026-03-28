@@ -92,10 +92,15 @@ systems?.forEach((s) => {
       }
     };
 
-    supabase.auth.getSession().then(({ data }) =>
-      handleSession(data.session)
-    );
-
+supabase.auth.getSession().then(async ({ data, error }) => {
+  try {
+    if (error) throw error;
+    await handleSession(data.session);
+  } catch (err) {
+    console.error(err);
+    setLoading(false); 
+  }
+});
     const { data: listener } =
       supabase.auth.onAuthStateChange((_e, session) =>
         handleSession(session)
