@@ -64,6 +64,10 @@ export default function MemberCreate() {
   };
 
   return (
+<>
+     <button onClick={() => navigate(-1)}>
+                ← Back
+      </button>
     <Card>
       <div className="p-6 w-full space-y-4">
 
@@ -77,13 +81,13 @@ export default function MemberCreate() {
             src={avatarPreview || "/default-avatar.png"}
             className="w-20 h-20 rounded-full object-cover border"
           />
-
+          <button className="flex  w-60">
           <input
             type="file"
             accept="image/*"
             onChange={handleAvatarChange}
             disabled={uploading}
-          />
+          /></button>
 
           {uploading && (
             <p className="text-xs text-blue-500">Uploading...</p>
@@ -141,5 +145,6 @@ export default function MemberCreate() {
         </button>
       </div>
     </Card>
+    </>
   );
 }

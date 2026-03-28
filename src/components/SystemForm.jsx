@@ -74,12 +74,13 @@ export default function SystemForm({
           className="w-20 h-20 rounded-full object-cover border"
         />
 
+      <button className="flex  w-60">
         <input
           type="file"
           accept="image/*"
           onChange={handleAvatarUpload}
           disabled={uploading}
-        />
+        /></button>
       </div>
 
       <input

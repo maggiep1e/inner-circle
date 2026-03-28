@@ -1,10 +1,20 @@
 import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 
-import { getMembers, createMember, updateMember as updateMemberApi, deleteMember as deleteMemberApi } from "../api/members";
-import { getSystems, createSystem, updateSystem as updateSystemApi } from "../api/systems";
+import {
+  getMembers,
+  createMember,
+  updateMember as updateMemberApi,
+  deleteMember as deleteMemberApi,
+} from "../api/members";
+
+import {
+  getSystems,
+  createSystem,
+  updateSystem as updateSystemApi,
+} from "../api/systems";
+
 import { getFoldersBySystem } from "../api/folders";
-import { useSessionStore } from "./sessionStore";
 import { getPublicUrl } from "../api/avatar";
 
 export const useSystemStore = create((set, get) => ({
@@ -18,10 +28,6 @@ export const useSystemStore = create((set, get) => ({
   currentFront: [],
   currentSystem: null,
 
-  // avatar caches (optional performance layer)
-  memberAvatarUrls: {},
-  systemAvatarUrls: {},
-
   // --------------------
   // HELPERS
   // --------------------
@@ -32,164 +38,102 @@ export const useSystemStore = create((set, get) => ({
   },
 
   // --------------------
-  // SYSTEMS
+  // SYSTEMS (PURE LOAD)
   // --------------------
-  loadSystems: async () => {
-    const { userId, user } = useSessionStore.getState();
-    if (!userId) return;
+  loadSystems: async (userId) => {
+    if (!userId) return [];
 
     try {
       const data = await getSystems(userId);
 
-      const limited =
-        !user?.plan || user.plan !== "paid"
-          ? data.slice(0, 1)
-          : data;
-
-      const systems = limited.map((s) => ({
+      const systems = (data || []).map((s) => ({
         ...s,
         avatarUrl: get().resolveAvatar(s.avatar),
       }));
 
-      set({
-        systems,
-        currentSystem: systems[0] || null,
-        systemId: systems[0]?.id || null,
-      });
+      set({ systems });
 
-      if (systems[0]) {
-        await get().loadMembers(systems[0].id);
-        await get().loadCurrentFront();
-      }
+      return systems;
     } catch (err) {
       console.error("loadSystems error:", err);
-      set({ systems: [], currentSystem: null });
+      set({ systems: [] });
+      return [];
     }
   },
 
-saveSystem: async (id, form) => {
-  const { data, error } = await supabase
-    .from("systems")
-    .update({
-      name: form.name,
-      description: form.description,
-      color: form.color,
-      avatar: form.avatar,
-    })
-    .eq("id", id)
-    .select()
-    .single();
+  // --------------------
+  // HYDRATE ONE SYSTEM (MAIN FIX)
+  // --------------------
+  hydrateSystem: async (systemId) => {
+    if (!systemId) return;
 
-  if (error) throw error;
-
-  const updated = {
-    ...data,
-    avatarUrl: get().resolveAvatar(data.avatar),
-  };
-
-  set((state) => ({
-    systems: state.systems.map((s) =>
-      s.id === id ? updated : s
-    ),
-    currentSystem:
-      state.currentSystem?.id === id
-        ? updated
-        : state.currentSystem,
-  }));
-
-  return updated;
-},
-
-setSystemAvatarUrl: (id, url) =>
-  set((state) => ({
-    systemAvatarUrls: {
-      ...state.systemAvatarUrls,
-      [id]: url,
-    },
-  })),
-
-  setSystems: (systems) => { set({ systems }); 
-  if (systems.length > 0 && !get().systemId) 
-    { get().setSystemId(systems[0].id); } },
-
-  setSystemId: async (id) => {
-    const system = get().systems.find((s) => s.id === id);
+    const system = get().systems.find((s) => s.id === systemId);
 
     set({
-      systemId: id,
+      systemId,
       currentSystem: system || null,
     });
 
-    if (id) {
-      await get().loadMembers(id);
-      await get().loadCurrentFront();
-    }
+    await Promise.all([
+      get().loadMembers(systemId),
+      get().loadCurrentFront(systemId),
+      get().loadFolders(systemId),
+    ]);
   },
 
-  setCurrentSystem: async (id) => {
-    const system = get().systems.find((s) => s.id === id);
-
-    set({
-      systemId: id,
-      currentSystem: system || null,
+  // --------------------
+  // SYSTEM CRUD
+  // --------------------
+  addSystem: async (data) => {
+    const created = await createSystem({
+      ...data,
+      avatar: data.avatar || null,
+      display_name: data.name,
     });
 
-    if (id) {
-      await get().loadMembers(id);
-    }
+    const system = {
+      ...created,
+      avatarUrl: get().resolveAvatar(created.avatar),
+    };
+
+    set((state) => ({
+      systems: [...state.systems, system],
+    }));
+
+    return system;
   },
-
-addSystem: async (data) => {
-  console.log("ADDING SYSTEM:", data);
-
-  const created = await createSystem({
-    ...data,
-    avatar: data.avatar || null,
-    display_name: data.name
-  });
-
-  set((state) => ({
-    systems: [
-      ...state.systems,
-      {
-        ...created,
-        avatarUrl: get().resolveAvatar(created.avatar),
-      },
-    ],
-  }));
-
-  return created;
-},
 
   updateSystem: async (id, updates) => {
     const updated = await updateSystemApi(id, updates);
 
+    const system = {
+      ...updated,
+      avatarUrl: get().resolveAvatar(updated.avatar),
+    };
+
     set((state) => ({
       systems: state.systems.map((s) =>
-        s.id === id
-          ? { ...updated, avatarUrl: get().resolveAvatar(updated.avatar) }
-          : s
+        s.id === id ? system : s
       ),
       currentSystem:
         state.currentSystem?.id === id
-          ? { ...updated, avatarUrl: get().resolveAvatar(updated.avatar) }
+          ? system
           : state.currentSystem,
     }));
 
-    return updated;
+    return system;
   },
 
   // --------------------
-  // MEMBERS
+  // MEMBERS (PURE)
   // --------------------
   loadMembers: async (systemId) => {
-    const id = systemId || get().systemId;
-    if (!id) return;
+    if (!systemId) return;
 
     const { data, error } = await supabase
       .from("members")
       .select("*")
-      .eq("system_id", id);
+      .eq("system_id", systemId);
 
     if (error) {
       console.error(error);
@@ -204,27 +148,27 @@ addSystem: async (data) => {
     set({ members });
   },
 
-addMember: async (data) => {
-  const { data: created, error } = await supabase
-    .from("members")
-    .insert(data)
-    .select()
-    .single();
+  addMember: async (data) => {
+    const { data: created, error } = await supabase
+      .from("members")
+      .insert(data)
+      .select()
+      .single();
 
-  if (error) throw error;
+    if (error) throw error;
 
-  set((state) => ({
-    members: [...state.members, created],
-  }));
+    set((state) => ({
+      members: [...state.members, created],
+    }));
 
-  return created;
-},
+    return created;
+  },
+
   updateMember: async (id, updates) => {
     const updated = await updateMemberApi(id, updates);
 
     const member = {
       ...updated,
-      id: updated._id || updated.id,
       avatarUrl: get().resolveAvatar(updated.avatar),
     };
 
@@ -257,28 +201,24 @@ addMember: async (data) => {
       member_id: id,
     }));
 
-    const { error } = await supabase
-      .from("front_logs")
-      .insert(inserts);
-
-    if (error) console.error(error);
+    await supabase.from("front_logs").insert(inserts);
 
     set({ currentFront: memberIds });
   },
 
-  loadCurrentFront: async () => {
-    const systemId = get().systemId;
-    if (!systemId) return;
+  loadCurrentFront: async (systemId) => {
+    const id = systemId || get().systemId;
+    if (!id) return;
 
     const { data, error } = await supabase
       .from("front_logs")
       .select("member_id")
-      .eq("system_id", systemId);
+      .eq("system_id", id);
 
     if (error) return console.error(error);
 
     set({
-      currentFront: data.map((f) => f.member_id),
+      currentFront: (data || []).map((f) => f.member_id),
     });
   },
 
@@ -292,19 +232,22 @@ addMember: async (data) => {
     await get().setFront(updated);
   },
 
-  // --------------------
-  // FOLDERS
-  // --------------------
-  loadFolders: async () => {
-    const systemId = get().systemId;
-    if (!systemId) return;
+  removeFromFront: (memberId) =>
+    set((state) => ({
+      currentFront: state.currentFront.filter(
+        (id) => id !== memberId
+      ),
+    })),
 
-    const folders = await getFoldersBySystem(systemId);
+  // --------------------
+  // FOLDERS (PURE)
+  // --------------------
+  loadFolders: async (systemId) => {
+    const id = systemId || get().systemId;
+    if (!id) return;
+
+    const folders = await getFoldersBySystem(id);
+
     set({ systemFolders: folders || [] });
   },
-
-  removeFromFront: (memberId) =>
-  set((state) => ({
-    currentFront: state.currentFront.filter((id) => id !== memberId),
-  })),
 }));

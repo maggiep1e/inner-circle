@@ -1,69 +1,78 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSystemStore } from "../store/systemStore";
 import SystemForm from "../components/SystemForm";
-import { getPublicUrl } from "../api/avatar";
 import SearchBar from "../components/SearchBar";
 import { supabase } from "../lib/supabase";
 import {
   getMembersByFolder,
   deleteFolder,
 } from "../api/folders";
-import { useParams } from "react-router-dom";
 
 export default function SystemView() {
   const navigate = useNavigate();
-  const {id: systemId} = useParams();
+  const { id: systemId } = useParams();
 
+  // -----------------------------
+  // STORE
+  // -----------------------------
   const currentSystem = useSystemStore((s) => s.currentSystem);
   const members = useSystemStore((s) => s.members);
   const folders = useSystemStore((s) => s.systemFolders);
   const currentFront = useSystemStore((s) => s.currentFront || []);
-  const setCurrentSystem = useSystemStore((s) => s.setCurrentSystem)
 
+  const setCurrentSystem = useSystemStore((s) => s.setCurrentSystem);
   const loadMembers = useSystemStore((s) => s.loadMembers);
   const loadFolders = useSystemStore((s) => s.loadFolders);
-  const saveSystem = useSystemStore((s) => s.saveSystem);
+  const updateSystem = useSystemStore((s) => s.updateSystem);
 
+  // -----------------------------
+  // LOCAL STATE
+  // -----------------------------
   const [edit, setEdit] = useState(false);
   const [activeFolder, setActiveFolder] = useState(null);
   const [folderMembers, setFolderMembers] = useState({});
 
   // -----------------------------
-  // LOAD
+  // HYDRATION (FIXED)
   // -----------------------------
-useEffect(() => {
-  if (systemId && !currentSystem?.id) {
-    setCurrentSystem(systemId);
-    return;
-  }
+  useEffect(() => {
+    if (!systemId) return;
 
-  if (currentSystem?.id) {
-    loadMembers(currentSystem.id);
+    // ensure correct system is selected
+    if (currentSystem?.id !== systemId) {
+      setCurrentSystem(systemId);
+      return;
+    }
+
+    // once system is ready → load dependent data
+    loadMembers(systemId);
     loadFolders();
-  }
-}, [systemId, currentSystem?.id]);
+  }, [systemId, currentSystem?.id, setCurrentSystem, loadMembers, loadFolders]);
 
+  // -----------------------------
+  // DERIVED VALUES
+  // -----------------------------
+  const systemAvatar =
+    currentSystem?.avatarUrl || "/default-avatar.png";
 
-const systemAvatar =
-  currentSystem?.avatarUrl || "/default-avatar.png";
-  // -----------------------------
-  // SORT MEMBERS (FRONT FIRST)
-  // -----------------------------
   const sortedMembers = useMemo(() => {
     const frontSet = new Set(currentFront);
 
     return [...members].sort((a, b) => {
       const aFront = frontSet.has(a.id);
       const bFront = frontSet.has(b.id);
-
       if (aFront === bFront) return 0;
       return aFront ? -1 : 1;
     });
   }, [members, currentFront]);
 
+  const currentFolderMemberIds = new Set(
+    (folderMembers[activeFolder?.id] || []).map((m) => m.id)
+  );
+
   // -----------------------------
-  // FOLDER HANDLING
+  // FOLDERS
   // -----------------------------
   const openFolder = async (folder) => {
     if (activeFolder?.id === folder.id) {
@@ -82,13 +91,12 @@ const systemAvatar =
   };
 
   const addToFolder = async (memberId) => {
-    const folder = activeFolder;
-    if (!folder) return;
+    if (!activeFolder) return;
 
     const member = members.find((m) => m.id === memberId);
 
     const updatedFolders = Array.from(
-      new Set([...(member.folders || []), folder.id])
+      new Set([...(member.folders || []), activeFolder.id])
     );
 
     await supabase
@@ -96,22 +104,21 @@ const systemAvatar =
       .update({ folders: updatedFolders })
       .eq("id", member.id);
 
-    const updated = await getMembersByFolder(folder.id);
+    const updated = await getMembersByFolder(activeFolder.id);
 
     setFolderMembers((prev) => ({
       ...prev,
-      [folder.id]: updated,
+      [activeFolder.id]: updated,
     }));
   };
 
   const removeFromFolder = async (memberId) => {
-    const folder = activeFolder;
-    if (!folder) return;
+    if (!activeFolder) return;
 
     const member = members.find((m) => m.id === memberId);
 
     const updatedFolders = (member.folders || []).filter(
-      (f) => f !== folder.id
+      (f) => f !== activeFolder.id
     );
 
     await supabase
@@ -119,25 +126,25 @@ const systemAvatar =
       .update({ folders: updatedFolders })
       .eq("id", member.id);
 
-    const updated = await getMembersByFolder(folder.id);
+    const updated = await getMembersByFolder(activeFolder.id);
 
     setFolderMembers((prev) => ({
       ...prev,
-      [folder.id]: updated,
+      [activeFolder.id]: updated,
     }));
   };
 
-const handleSave = async (form) => {
-  const updated = await saveSystem(currentSystem.id, form);
-  setEdit(false);
+  // -----------------------------
+  // SYSTEM SAVE (FIXED)
+  // -----------------------------
+  const handleSave = async (form) => {
+    await updateSystem(currentSystem.id, form);
+    setEdit(false);
+  };
 
-  await get().loadSystems();
-};
-
-  const currentFolderMemberIds = new Set(
-    (folderMembers[activeFolder?.id] || []).map((m) => m.id)
-  );
-
+  // -----------------------------
+  // UI
+  // -----------------------------
   return (
     <div className="p-6 space-y-6">
 
@@ -160,10 +167,10 @@ const handleSave = async (form) => {
 
         <div
           className="h-32 flex items-end p-4 relative"
-          style={{ backgroundColor: currentSystem.color || "#888" }}
+          style={{ backgroundColor: currentSystem?.color || "#888" }}
         >
           <h1 className="text-2xl pl-24 font-bold text-white">
-            {currentSystem.name}
+            {currentSystem?.name}
           </h1>
 
           <img
@@ -173,7 +180,7 @@ const handleSave = async (form) => {
         </div>
 
         <div className="p-4 pt-14">
-          {currentSystem.description || (
+          {currentSystem?.description || (
             <p className="text-gray-400">No description yet.</p>
           )}
         </div>
@@ -187,8 +194,6 @@ const handleSave = async (form) => {
           </button>
         </div>
       </div>
-
-  
 
       {/* ================= FOLDERS ================= */}
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow p-4">
@@ -207,7 +212,6 @@ const handleSave = async (form) => {
         </div>
 
         <div className="flex flex-col gap-2">
-
           {folders.map((folder) => {
             const isOpen = activeFolder?.id === folder.id;
 
@@ -252,32 +256,23 @@ const handleSave = async (form) => {
                 {isOpen && (
                   <div className="p-3 border-t">
 
-                    {/* folder members */}
-                    <div className="mb-2">
-                      {(folderMembers[folder.id] || []).map((m) => (
-                        <div
-                          key={m.id}
-                          className="flex justify-between text-sm p-1"
+                    {(folderMembers[folder.id] || []).map((m) => (
+                      <div
+                        key={m.id}
+                        className="flex justify-between text-sm p-1"
+                      >
+                        <span>{m.display_name || m.name}</span>
+
+                        <button
+                          onClick={() => removeFromFolder(m.id)}
+                          className="text-red-500 text-xs"
                         >
-                          <span>{m.display_name || m.name}</span>
+                          remove
+                        </button>
+                      </div>
+                    ))}
 
-                          <button
-                            onClick={() => removeFromFolder(m.id)}
-                            className="text-red-500 text-xs"
-                          >
-                            remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* add member */}
                     <div className="border-t pt-2">
-                      <p className="text-m mb-2">
-                        Add member:
-                      </p>
-  
-
                       <SearchBar
                         items={members.filter(
                           (m) => !currentFolderMemberIds.has(m.id)
@@ -295,17 +290,23 @@ const handleSave = async (form) => {
         </div>
       </div>
 
-      {/* ================= ALL MEMBERS ================= */}
+      {/* ================= MEMBERS ================= */}
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow p-4">
-          <div className="flex justify-between items-center mb-3 ">
-        <h2 className="font-semibold mb-2">
-          All Members ({members.length})
-        </h2>
 
-        <button className="" onClick={() => navigate(`/systems/${currentSystem.id}/members/new`)}>
-          Add member:
-        </button>
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="font-semibold">
+            All Members ({members.length})
+          </h2>
+
+          <button
+            onClick={() =>
+              navigate(`/systems/${currentSystem.id}/members/new`)
+            }
+          >
+            Add member
+          </button>
         </div>
+
         <SearchBar
           items={members}
           placeholder="Search members..."
@@ -323,7 +324,7 @@ const handleSave = async (form) => {
             return (
               <div
                 key={m.id}
-                className={`flex flex-wrap md:w-1/3 items-center gap-2 p-2 border rounded cursor-pointer ${
+                className={`flex items-center gap-2 p-2 border rounded cursor-pointer ${
                   isFront ? "border-green-500 bg-green-50 dark:bg-green-900/20" : ""
                 }`}
                 onClick={() =>
@@ -333,7 +334,7 @@ const handleSave = async (form) => {
                 }
               >
                 <img
-                  src={(m.avatar) || "/default-avatar.png"}
+                  src={m.avatarUrl || "/default-avatar.png"}
                   className="w-8 h-8 rounded-full object-cover"
                 />
 
@@ -359,6 +360,7 @@ const handleSave = async (form) => {
               initialData={currentSystem}
               onSubmit={handleSave}
             />
+
             <button
               onClick={() => setEdit(false)}
               className="mt-2 w-full border p-2"

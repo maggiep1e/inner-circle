@@ -67,9 +67,12 @@ export default function SystemCreate() {
   };
 
   return (
+    <>
+    <button onClick={() => navigate("/systems")}>
+                ← Back
+      </button>
     <Card>
       <div className="p-6 w-full space-y-4">
-
         <h1 className="text-xl font-bold">Create System</h1>
 
         {/* Avatar */}
@@ -80,7 +83,7 @@ export default function SystemCreate() {
             src={avatarPreview || "/default-avatar.png"}
             className="w-20 h-20 rounded-full object-cover border"
           />
-          <button className="w-1/2">
+          <button className="flex  w-60">
           <input
             type="file"
             accept="image/*"
@@ -135,5 +138,6 @@ export default function SystemCreate() {
         </button>
       </div>
     </Card>
+    </>
   );
 }

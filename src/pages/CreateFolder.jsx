@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { createFolder } from "../api/folders";
 import { useSessionStore } from "../store/sessionStore";
+import Card from "../components/Card";
 
 export default function CreateFolder() {
   const { systemId } = useParams();
@@ -33,6 +34,11 @@ export default function CreateFolder() {
   };
 
   return (
+    <>
+    <Card>
+         <button onClick={() => navigate(-1)}>
+                ← Back
+      </button>
     <div className="p-6 max-w-md mx-auto">
       <h1 className="text-xl font-bold mb-4">Create Folder</h1>
 
@@ -51,5 +57,7 @@ export default function CreateFolder() {
         {loading ? "Creating..." : "Create Folder"}
       </button>
     </div>
+    </Card>
+    </>
   );
 }
