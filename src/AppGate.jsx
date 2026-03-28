@@ -53,15 +53,15 @@ export default function AppGate() {
         if (profile?.avatar) {
           const { data } = supabase.storage
             .from("avatars")
-            .getPublicUrl(profile.avatar);
+            .getPublicUrl(profile?.avatar);
 
-          setProfileAvatarUrl(data.publicUrl);
+          setProfileAvatarUrl(data?.publicUrl);
         }
 
         const { data: systemsData } = await supabase
           .from("systems")
           .select("*")
-          .eq("user_id", userObj.id);
+          .eq("user_id", userObj?.id);
 
         const systems = systemsData || [];
         setSystems(systems);
