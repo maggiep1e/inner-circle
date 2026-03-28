@@ -78,7 +78,7 @@ export default function SystemsPage() {
         </div>
         <Card>
           <h2 className="text-xl font-bold p-2">Settings</h2>
-            <img src={getPublicUrl(profile.avatar)}
+            <img src={getPublicUrl(profile?.avatar)}
                      onClick={(e) => {
                   e.stopPropagation();
                   navigate(`/user`);
