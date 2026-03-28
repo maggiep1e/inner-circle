@@ -67,19 +67,38 @@ export const useSystemStore = create((set, get) => ({
     }
   },
 
-  saveSystem: async (id, form) => {
-  const { error } = await supabase
+saveSystem: async (id, form) => {
+  const { data, error } = await supabase
     .from("systems")
     .update({
       name: form.name,
       description: form.description,
       color: form.color,
-      avatar: form.avatar,   
+      avatar: form.avatar,
     })
-    .eq("id", id);
+    .eq("id", id)
+    .select()
+    .single();
 
   if (error) throw error;
-}, 
+
+  const updated = {
+    ...data,
+    avatarUrl: get().resolveAvatar(data.avatar),
+  };
+
+  set((state) => ({
+    systems: state.systems.map((s) =>
+      s.id === id ? updated : s
+    ),
+    currentSystem:
+      state.currentSystem?.id === id
+        ? updated
+        : state.currentSystem,
+  }));
+
+  return updated;
+},
 
 setSystemAvatarUrl: (id, url) =>
   set((state) => ({

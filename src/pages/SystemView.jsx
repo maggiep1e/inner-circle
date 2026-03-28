@@ -13,7 +13,7 @@ import { useParams } from "react-router-dom";
 
 export default function SystemView() {
   const navigate = useNavigate();
-  const systemId = useParams();
+  const {id: systemId} = useParams();
 
   const currentSystem = useSystemStore((s) => s.currentSystem);
   const members = useSystemStore((s) => s.members);
@@ -32,17 +32,21 @@ export default function SystemView() {
   // -----------------------------
   // LOAD
   // -----------------------------
-  useEffect(() => {
-    if (!currentSystem?.id) setCurrentSystem(systemId);
+useEffect(() => {
+  if (systemId && !currentSystem?.id) {
+    setCurrentSystem(systemId);
+    return;
+  }
+
+  if (currentSystem?.id) {
     loadMembers(currentSystem.id);
     loadFolders();
-  }, [currentSystem?.id]);
+  }
+}, [systemId, currentSystem?.id]);
 
-  if (!currentSystem) return <div className="p-6">Loading...</div>;
 
-  const systemAvatar =
-    getPublicUrl(currentSystem.avatar) || "/default-avatar.png";
-
+const systemAvatar =
+  currentSystem.avatarUrl || "/default-avatar.png";
   // -----------------------------
   // SORT MEMBERS (FRONT FIRST)
   // -----------------------------
@@ -123,10 +127,12 @@ export default function SystemView() {
     }));
   };
 
-  const handleSave = async (form) => {
-    await saveSystem(currentSystem.id, form);
-    setEdit(false);
-  };
+const handleSave = async (form) => {
+  const updated = await saveSystem(currentSystem.id, form);
+  setEdit(false);
+
+  await get().loadSystems();
+};
 
   const currentFolderMemberIds = new Set(
     (folderMembers[activeFolder?.id] || []).map((m) => m.id)
