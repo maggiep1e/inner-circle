@@ -71,10 +71,10 @@ export const useSystemStore = create((set, get) => ({
   const { error } = await supabase
     .from("systems")
     .update({
-      display_name: form.name,
+      name: form.name,
       description: form.description,
       color: form.color,
-      avatar: form.avatar, // 🔥 REQUIRED
+      avatar: form.avatar,   
     })
     .eq("id", id);
 

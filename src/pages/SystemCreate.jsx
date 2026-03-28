@@ -80,7 +80,7 @@ export default function SystemCreate() {
             src={avatarPreview || "/default-avatar.png"}
             className="w-20 h-20 rounded-full object-cover border"
           />
-          <button>
+          <button className="w-1/2">
           <input
             type="file"
             accept="image/*"

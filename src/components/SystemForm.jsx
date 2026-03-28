@@ -60,7 +60,6 @@ export default function SystemForm({
   };
 
   const handleSubmit = () => {
-    if (!form.name.trim()) return;
     onSubmit(form);
   };
 

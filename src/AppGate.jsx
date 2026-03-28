@@ -65,13 +65,20 @@ export default function AppGate() {
 
         const systems = systemsData || [];
         setSystems(systems);
+const avatars = {};
 
-        const avatars = {};
-        systems?.forEach((s) => {
-          avatars[s.id] =
-            supabase.storage.from("avatars").getPublicUrl(s.avatar).data
-              .publicUrl || "/default-avatar.png";
-        });
+systems?.forEach((s) => {
+  if (!s?.avatar) {
+    avatars[s.id] = "/default-avatar.png";
+    return;
+  }
+
+  const { data } = supabase.storage
+    .from("avatars")
+    .getPublicUrl(s.avatar);
+
+  avatars[s.id] = data?.publicUrl || "/default-avatar.png";
+});
 
         setSystemAvatarUrl(avatars);
 

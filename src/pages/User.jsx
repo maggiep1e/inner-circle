@@ -44,7 +44,7 @@ export default function UserSettingsPage() {
             src={profileAvatarUrl}
             className="w-32 h-32 rounded-full object-cover"
           />
-
+          <button className="w-1/2">
           <input
             type="file"
             accept="image/*"
@@ -52,7 +52,7 @@ export default function UserSettingsPage() {
               const file = e.target.files?.[0];
               if (file) uploadAvatar(file);
             }}
-          />
+          /></button>
         </div>
 
         {/* FORM */}
