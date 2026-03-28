@@ -29,9 +29,9 @@ export const useProfileStore = create((set, get) => ({
       if (profileData) {
         set({ profile: profileData });
         
-        if (profileData.avatar) {
-          const { data } = supabase.storage.from("avatars").getPublicUrl(profileData.avatar);
-          set({ profileAvatarUrl: data.publicUrl });
+        if (profileData?.avatar) {
+          const { data } = supabase.storage.from("avatars").getPublicUrl(profileData?.avatar);
+          set({ profileAvatarUrl: data?.publicUrl });
         }
       }
     } catch (err) {
