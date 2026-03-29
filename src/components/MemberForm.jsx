@@ -41,8 +41,7 @@ export default function MemberForm({
       tags: initialData.tags || [],
     });
 
-    setAvatarUrl(resolveAvatar(initialData?.avatar));
-  }, [initialData, resolveAvatar]);
+  }, [initialData]);
 
     useEffect(() => {
       const delay = setTimeout(() => {
@@ -161,7 +160,7 @@ export default function MemberForm({
 
       <div className="flex flex-col items-center gap-2">
         <img
-          src={avatarUrl || "/default-avatar.png"}
+          src={resolveAvatar(form.avatar) || "/default-avatar.png"}
           className="w-20 h-20 rounded-full object-cover border"
         />
         <button>
