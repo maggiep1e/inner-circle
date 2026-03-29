@@ -1,19 +1,29 @@
 import Card from "./Card";
 import { useSystemStore } from "../store/systemStore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SwitchFrontModal from "./SwitchFrontModal";
+import { resolveAvatar } from "../api/avatar";
 
 export default function CurrentFront() {
   const members = useSystemStore((s) => s.members);
   const currentFront = useSystemStore((s) => s.currentFront || []);
-  const systemId = useSystemStore((s) => s.currentSystem?.id || s.systems[0]?.id);
-  const removeFromFront = useSystemStore((s) => s.removeFromFront);
+  const systemId = useSystemStore(
+    (s) => s.currentSystem?.id || s.systems[0]?.id
+  );
 
   const [open, setOpen] = useState(false);
 
   const currentMembers = members.filter((m) =>
-    currentFront.includes(m.id)
+    (currentFront || []).includes(m.id)
   );
+
+  const removeFromFront = async (id) => {
+    if (!systemId) return;
+
+    const updated = (currentFront || []).filter((x) => x !== id);
+
+    await useSystemStore.getState().setFront(systemId, updated);
+  };
 
   return (
     <>
@@ -29,40 +39,37 @@ export default function CurrentFront() {
               + Add
             </button>
           </div>
+
           {currentMembers.length > 0 ? (
             <div className="flex flex-wrap gap-4">
-              {currentMembers.map((member) => (
-                <div
-                  key={member.id}
-                  className="relative flex flex-col items-center w-20 group"
-                >
-                  <button
-                    onClick={() => removeFromFront(member.id)}
-                    className="absolute -top-2 -right-2 hidden group-hover:flex w-5 h-5 rounded-full bg-red-500 text-white"
-                  >
-                    X
-                  </button>
+              {currentMembers.map((member) => {
+                const avatarUrl = resolveAvatar(member.avatar);
 
-                  <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-black dark:border-white">
-                    {member?.avatar ? (
+                return (
+                  <div
+                    key={member.id}
+                    className="relative flex flex-col items-center w-20 group"
+                  >
+                    <button
+                      onClick={() => removeFromFront(member.id)}
+                      className="absolute -top-2 -right-2 flex w-5 h-5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition"
+                    >
+                      X
+                    </button>
+
+                    <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-black dark:border-white">
                       <img
-                        src={member.avatar}
+                        src={avatarUrl}
                         className="w-full h-full object-cover"
                       />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-400 text-white font-bold">
-                        {member.display_name?.[0] ||
-                          member.name?.[0] ||
-                          "?"}
-                      </div>
-                    )}
-                  </div>
+                    </div>
 
-                  <span className="text-xs mt-2 truncate w-full text-center">
-                    {member.display_name || member.name}
-                  </span>
-                </div>
-              ))}
+                    <span className="text-xs mt-2 truncate w-full text-center">
+                      {member.display_name || member.name}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-6">

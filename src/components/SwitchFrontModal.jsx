@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSystemStore } from "../store/systemStore";
+import { resolveAvatar } from "../api/avatar";
 
 export default function SwitchFrontModal({ onClose }) {
   const members = useSystemStore((s) => s.members);
@@ -69,7 +70,7 @@ export default function SwitchFrontModal({ onClose }) {
               }`}
             >
               <div className="w-8 h-8 rounded-full bg-zinc-300 flex items-center justify-center">
-                {member.name?.[0]?.toUpperCase() || "?"}
+                <img src={resolveAvatar(member.avatar)} alt={member.display_name} className="w-8 h-8 rounded-full"/>
               </div>
 
               <span className="flex-1 text-left">

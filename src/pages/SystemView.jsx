@@ -18,7 +18,6 @@ export default function SystemView() {
   const members = useSystemStore((s) => s.members);
   const folders = useSystemStore((s) => s.systemFolders);
   const currentFront = useSystemStore((s) => s.currentFront);
-  const setCurrentFront = useSystemStore((s) => s.setCurrentFront);
   const hydrateSystem = useSystemStore((s) => s.hydrateSystem);
   const loadMembers = useSystemStore((s) => s.loadMembers);
   const loadFolders = useSystemStore((s) => s.loadFolders);
@@ -43,24 +42,19 @@ export default function SystemView() {
     }
   }, [systemIdParam, systems, currentSystem?.id, hydrateSystem]);
 
-  useEffect(() => {
+  const toggleFront = async (id) => {
     if (!currentSystem?.id) return;
 
-    loadMembers(currentSystem.id);
-    loadFolders(currentSystem.id);
-  }, [currentSystem?.id, loadMembers, loadFolders]);
-
-
-
-
-  const toggleFront = (memberId) => {
     const current = Array.isArray(currentFront) ? currentFront : [];
 
-    const updated = current.includes(memberId)
-      ? current.filter((id) => id !== memberId)
-      : [...current, memberId];
+    const updated = current.includes(id)
+      ? current.filter((x) => x !== id)
+      : [...current, id];
 
-    setCurrentFront(updated);
+    await useSystemStore.getState().setFront(
+      currentSystem.id,
+      updated
+    );
   };
 
   const systemAvatar = useMemo(() => {
@@ -382,7 +376,7 @@ export default function SystemView() {
                   }}
                   className="text-xs border px-2 py-1 rounded"
                 >
-                  {isFront ? "Remove Front" : "Set Front"}
+                  {isFront ? "Remove from Front" : "Add to Front"}
                 </button>
               </div>
             );

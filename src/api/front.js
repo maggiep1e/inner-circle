@@ -56,3 +56,18 @@ export async function toggleFront(systemId, memberId, currentFront) {
   await setFronts(systemId, updated);
   return updated;
 }
+
+export async function addToFront(systemId, memberId) {
+  return supabase.from("system_front").insert({
+    system_id: systemId,
+    member_id: memberId,
+  });
+}
+
+export async function removeFromFront(systemId, memberId) {
+  return supabase
+    .from("system_front")
+    .delete()
+    .eq("system_id", systemId)
+    .eq("member_id", memberId);
+}

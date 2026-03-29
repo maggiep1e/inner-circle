@@ -264,7 +264,9 @@ setCurrentFront: async (systemId, memberIds) => {
       currentFront: state.currentFront.filter(
         (id) => id !== memberId
       ),
-    })),
+    }),
+
+  ),
 
 //folders 
   loadFolders: async (systemId) => {

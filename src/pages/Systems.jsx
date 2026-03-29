@@ -26,8 +26,17 @@ export default function SystemsPage() {
   useEffect(() => {
     if (!systems?.length) return;
 
-    ensureCurrentSystem();
+    const timeout = setTimeout(() => {
+      ensureCurrentSystem();
+    }, 0);
+
+    return () => clearTimeout(timeout);
   }, [systems, ensureCurrentSystem]);
+
+    const selectSystem = async (id) => {
+    await hydrateSystem(id);
+    navigate(`/systems/${id}`);
+  };
 
   return (
     <div className="flex flex-wrap md:flex-nowrap gap-6 p-4">
@@ -43,10 +52,7 @@ export default function SystemsPage() {
             return (
               <div
                 key={sys.id}
-                onClick={() => {
-                  hydrateSystem(sys.id);
-                  navigate(`/systems/${sys.id}`);
-                }}
+                onClick={() => selectSystem(sys.id)}
                 className="p-3 rounded cursor-pointer shadow-sm hover:opacity-90 transition flex flex-col gap-2"
                 style={{ backgroundColor: sys.color || "#ffffff" }}
               >

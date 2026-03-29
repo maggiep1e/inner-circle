@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { uploadFile, uploadFileFromUrl } from "../api/avatar";
-import { getPublicUrl } from "../api/avatar";
 import { useSystemStore } from "../store/systemStore";
 import { useNavigate } from "react-router-dom";
+import { resolveAvatar } from "../api/avatar";
 
 export default function MemberForm({
   initialData = {},
@@ -26,16 +26,6 @@ export default function MemberForm({
   const [tagInput, setTagInput] = useState("");
   const deleteMember = useSystemStore((s) => s.deleteMember)
   const navigate = useNavigate();
-
-
-  function resolveAvatar(pathOrUrl) {
-    if (!pathOrUrl) return "/default-avatar.png";
-
-    if (pathOrUrl.startsWith("http")) return pathOrUrl;
-
-    return getPublicUrl(pathOrUrl);
-  }
-
 
   useEffect(() => {
     if (!initialData) return;
