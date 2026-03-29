@@ -1,4 +1,3 @@
-import { normalizeMember } from "./memberAdapters";
 import * as XLSX from "xlsx";
 
 export async function importFromExcel(file) {

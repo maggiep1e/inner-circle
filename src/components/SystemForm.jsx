@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { uploadFile, getPublicUrl } from "../api/avatar";
-import { useSystemStore } from "../store/systemStore";
+import { uploadFile, uploadFileFromUrl } from "../api/avatar";
+import { resolveAvatar } from "../api/avatar";
 
 export default function SystemForm({
   initialData = {},
@@ -13,11 +13,11 @@ export default function SystemForm({
     color: "#ffffff",
     avatar: "",
   });
-
+  const [avatarInput, setAvatarInput] = useState("");
+  const [avatarFile, setAvatarFile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  // hydrate edit mode
 useEffect(() => {
   setForm({
     name: initialData?.name || "",
@@ -26,11 +26,9 @@ useEffect(() => {
     avatar: initialData?.avatar || "",
   });
 
-  const avatarPath = initialData?.avatar;
 
-  setAvatarUrl(
-    avatarPath ? getPublicUrl(avatarPath) : null
-  );
+
+setAvatarUrl(resolveAvatar(initialData?.avatar));
 }, [initialData]);
 
 
@@ -43,27 +41,29 @@ useEffect(() => {
     }));
   };
 
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+ async function handleAvatarUpload(e) {
+      e.preventDefault();
 
-    setUploading(true);
+      let avatarPath = form.avatar;
 
-    try {
-      const { path, url } = await uploadFile(file, "systems");
+      try {
+        if (avatarFile) {
+          const { path } = await uploadFile(avatarFile, "systems");
+          avatarPath = path;
+        } else if (avatarInput.trim()) {
+          const { path } = await uploadFileFromUrl(avatarInput, "systems");
+          avatarPath = path;
+        }
 
-      setForm((prev) => ({
-        ...prev,
-        avatar: path,
-      }));
+        handleSubmit({
+          ...form,
+          avatar: avatarPath,
+        });
+      } catch (err) {
+        console.error(err);
+      }
+  }
 
-      setAvatarUrl(url);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const handleSubmit = () => {
     onSubmit(form);
@@ -80,43 +80,49 @@ useEffect(() => {
           className="w-20 h-20 rounded-full object-cover border"
         />
 
-      <button className="flex  w-60">
+          <button className="flex  w-60">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarUpload}
+            disabled={uploading}
+          /></button>
+          <input
+              type="text"
+              placeholder="Or paste image URL..."
+              value={avatarInput}
+              onChange={(e) => setAvatarInput(e.target.value)}
+            />
+        </div>
+
         <input
-          type="file"
-          accept="image/*"
-          onChange={handleAvatarUpload}
-          disabled={uploading}
-        /></button>
-      </div>
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          placeholder="System Name"
+          className="w-full border p-2 rounded"
+        />
 
-      <input
-        name="name"
-        value={form.name}
-        onChange={handleChange}
-        placeholder="System Name"
-        className="w-full border p-2 rounded"
-      />
+        <textarea
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          placeholder="Description"
+          className="w-full border p-2 rounded"
+        />
 
-      <textarea
-        name="description"
-        value={form.description}
-        onChange={handleChange}
-        placeholder="Description"
-        className="w-full border p-2 rounded"
-      />
+        <input
+          type="color"
+          name="color"
+          value={form.color}
+          onChange={handleChange}
+        />
 
-      <input
-        type="color"
-        name="color"
-        value={form.color}
-        onChange={handleChange}
-      />
-
-      <button
-        onClick={handleSubmit}
-        disabled={uploading || submitting}
-        className="w-full bg-blue-500 text-white p-2 rounded"
-      >
+        <button
+          onClick={handleSubmit}
+          disabled={uploading || submitting}
+          className="w-full bg-blue-500 text-white p-2 rounded"
+        >
         {uploading ? "Uploading..." : submitting ? "Saving..." : "Save"}
       </button>
     </div>

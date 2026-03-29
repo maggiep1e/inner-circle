@@ -10,10 +10,12 @@ export default function SwitchFrontModal({ onClose }) {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState([]);
 
-  // sync ONLY when system/front changes
+
   useEffect(() => {
   setSelected(Array.isArray(currentFront) ? currentFront : []);
 }, [currentFront, systemId]);
+
+
 
   const filtered = members.filter((m) =>
     (m.display_name || m.name || "")
@@ -29,6 +31,8 @@ export default function SwitchFrontModal({ onClose }) {
     );
   };
 
+
+
   const handleDone = async () => {
     if (!systemId) return;
 
@@ -39,12 +43,10 @@ export default function SwitchFrontModal({ onClose }) {
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-2xl p-6 w-[400px] shadow-xl">
       
-      {/* HEADER */}
       <h2 className="text-lg font-bold mb-4">
         Select Front
       </h2>
 
-      {/* SEARCH */}
       <input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -52,7 +54,6 @@ export default function SwitchFrontModal({ onClose }) {
         className="w-full mb-4 px-3 py-2 rounded bg-zinc-200 dark:bg-zinc-700"
       />
 
-      {/* LIST */}
       <div className="max-h-60 overflow-y-auto flex flex-col gap-2">
         {filtered.map((member) => {
           const isSelected = selected.includes(member.id);
@@ -87,7 +88,6 @@ export default function SwitchFrontModal({ onClose }) {
         )}
       </div>
 
-      {/* ACTIONS */}
       <div className="flex gap-2 mt-4">
         <button
           onClick={() => setSelected([])}

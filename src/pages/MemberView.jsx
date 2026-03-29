@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSystemStore } from "../store/systemStore";
-import Card from "../components/Card";
 import MemberForm from "../components/MemberForm";
 
 import { createMemberJournal, searchMemberJournal } from "../api/journals";
@@ -15,31 +14,21 @@ export default function MemberView() {
   const updateMember = useSystemStore((s) => s.updateMember);
 
   const [member, setMember] = useState(null);
-
-  // journal state
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // -----------------------------
-  // load members
-  // -----------------------------
+
   useEffect(() => {
     if (systemId) loadMembers(systemId);
   }, [systemId]);
 
-  // -----------------------------
-  // find member
-  // -----------------------------
   useEffect(() => {
     const found = members.find((m) => m._id === memberId || m.id === memberId);
     setMember(found || null);
   }, [members, memberId]);
 
-  // -----------------------------
-  // load journal entries
-  // -----------------------------
   useEffect(() => {
     if (!memberId) return;
 
@@ -58,16 +47,12 @@ export default function MemberView() {
     load();
   }, [memberId]);
 
-  // -----------------------------
-  // save member edits
-  // -----------------------------
+
+
   const handleSave = async (form) => {
     await updateMember(memberId, form);
   };
 
-  // -----------------------------
-  // create journal entry
-  // -----------------------------
   const submitJournal = async () => {
     if (!title && !content) return;
 
@@ -87,10 +72,14 @@ export default function MemberView() {
     setEntries(updated || []);
   };
 
+
+
   if (!member) {
     return <div className="p-6">Loading member...</div>;
   }
 
+
+  
   return (
       <div className="md:p-6 md:w-1/2 space-y-8">
 

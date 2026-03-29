@@ -9,13 +9,11 @@ export const useSessionStore = create((set, get) => ({
   profileAvatarUrl: null,
   mode: "system",
 
-  // --- Setters ---
   setUser: (user) => set({ user }),
   setProfile: (profile) => set({ profile }),
   setProfileAvatarUrl: (url) => set({ profileAvatarUrl: url }),
   setMode: (mode) => set({ mode }),
 
-  // --- Logout ---
   logout: async () => {
     try {
       await supabase.auth.signOut();
@@ -26,7 +24,6 @@ export const useSessionStore = create((set, get) => ({
     }
   },
 
-  // --- Load session from Supabase ---
   loadSession: async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -37,7 +34,6 @@ export const useSessionStore = create((set, get) => ({
     const userObj = session.user;
     set({ user: userObj });
 
-    // Load profile
     try {
       const { data: profiles, error } = await supabase
         .from("profiles")
@@ -51,7 +47,7 @@ export const useSessionStore = create((set, get) => ({
       if (profile) {
         set({ profile });
 
-        // Load avatar URL
+
         if (profile.avatar) {
           const { data: urlData, error: urlError } = supabase
             .storage

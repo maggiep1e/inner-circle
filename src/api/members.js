@@ -1,5 +1,5 @@
 import { supabase } from "../lib/supabase";
-import { uploadAvatarFromUrl } from "./avatar";
+import { uploadFileFromUrl } from "./avatar";
 
 
 export async function getMembers(systemId) {
@@ -128,7 +128,7 @@ export async function importMembers({
 
       if (m.avatar_url) {
         try {
-          avatarUrl = await uploadAvatarFromUrl(
+          avatarUrl = await uploadFileFromUrl(
             m.avatar_url,
             `${systemId}-${crypto.randomUUID()}`
           );

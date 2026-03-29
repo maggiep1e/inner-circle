@@ -19,13 +19,10 @@ export default function MemberCreate() {
     avatar: "",
     color: ""
   });
-
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  // -----------------------------
-  // avatar upload (same pattern)
-  // -----------------------------
+
  const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -37,19 +34,17 @@ export default function MemberCreate() {
 
       setForm((prev) => ({
         ...prev,
-        avatar: path, // 🔥 store DB path
+        avatar: path, 
       }));
 
-      setAvatarPreview(url); // 🔥 instant UI preview
+      setAvatarPreview(url);
     } catch (err) {
       console.error("Avatar upload failed:", err);
     } finally {
       setUploading(false);
     }
   };
-  // -----------------------------
-  // submit
-  // -----------------------------
+
   const handleCreate = async () => {
     if (!user?.id || !systemId) return;
 
@@ -64,16 +59,15 @@ export default function MemberCreate() {
   };
 
   return (
-<>
+    <>
      <button onClick={() => navigate(-1)}>
                 ← Back
       </button>
-    <Card>
-      <div className="p-6 w-full space-y-4">
+       <Card>
+        <div className="p-6 w-full space-y-4">
 
         <h1 className="text-xl font-bold">Create Member</h1>
 
-        {/* Avatar */}
         <div className="space-y-2">
           <p className="text-zinc-400 text-sm">Avatar</p>
 
@@ -94,7 +88,6 @@ export default function MemberCreate() {
           )}
         </div>
 
-        {/* Name */}
         <input
           placeholder="Name"
           value={form.name}
@@ -104,7 +97,6 @@ export default function MemberCreate() {
           className="p-2 w-full border rounded"
         />
 
-        {/* Display Name */}
         <input
           placeholder="Display Name"
           value={form.display_name}
@@ -114,7 +106,6 @@ export default function MemberCreate() {
           className="p-2 w-full border rounded"
         />
 
-        {/* Pronouns */}
         <input
           placeholder="Pronouns"
           value={form.pronouns}
@@ -135,7 +126,6 @@ export default function MemberCreate() {
           />
         </div>
 
-        {/* Submit */}
         <button
           className="w-full bg-blue-500 text-white p-2 rounded"
           onClick={handleCreate}

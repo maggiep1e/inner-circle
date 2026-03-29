@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { uploadFile } from "../api/avatar";
+import { uploadFile, uploadFileFromUrl } from "../api/avatar";
 import { getPublicUrl } from "../api/avatar";
+import { useSystemStore } from "../store/systemStore";
+import { useNavigate } from "react-router-dom";
 
 export default function MemberForm({
   initialData = {},
@@ -8,6 +10,7 @@ export default function MemberForm({
   submitting = false,
 }) {
   const [form, setForm] = useState({
+    id: "",
     name: "",
     display_name: "",
     pronouns: "",
@@ -17,17 +20,28 @@ export default function MemberForm({
     tags: [],
   });
 
+  const [avatarInput, setAvatarInput] = useState("");
   const [avatarUrl, setAvatarUrl] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  const deleteMember = useSystemStore((s) => s.deleteMember)
+  const navigate = useNavigate();
 
-  // -----------------------------
-  // HYDRATE EDIT MODE
-  // -----------------------------
+
+  function resolveAvatar(pathOrUrl) {
+    if (!pathOrUrl) return "/default-avatar.png";
+
+    if (pathOrUrl.startsWith("http")) return pathOrUrl;
+
+    return getPublicUrl(pathOrUrl);
+  }
+
+
   useEffect(() => {
     if (!initialData) return;
 
     setForm({
+      id: initialData.id || "",
       name: initialData.name || "",
       display_name: initialData.display_name || "",
       pronouns: initialData.pronouns || "",
@@ -37,13 +51,23 @@ export default function MemberForm({
       tags: initialData.tags || [],
     });
 
-    setAvatarUrl(getPublicUrl(initialData.avatar) || null);
-  }, [initialData]);
+    setAvatarUrl(resolveAvatar(initialData?.avatar));
+  }, [initialData, resolveAvatar]);
 
-  // -----------------------------
-  // AVATAR UPLOAD
-  // -----------------------------
-  const handleAvatarUpload = async (e) => {
+    useEffect(() => {
+      const delay = setTimeout(() => {
+        if (avatarInput.startsWith("http")) {
+          handleAvatarFromUrl();
+        }
+      }, 500);
+
+      return () => clearTimeout(delay);
+    }, [avatarInput]);
+
+
+
+
+  async function handleAvatarUpload(e) {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -59,15 +83,36 @@ export default function MemberForm({
 
       setAvatarUrl(url);
     } catch (err) {
-      console.error("Avatar upload failed:", err);
+      console.error(err);
     } finally {
       setUploading(false);
     }
-  };
+  }
 
-  // -----------------------------
-  // FIELD UPDATE (FIXED)
-  // -----------------------------
+  async function handleAvatarFromUrl() {
+    if (!avatarInput.trim()) return;
+
+    setUploading(true);
+
+    try {
+      const { path, url } = await uploadFileFromUrl(
+        avatarInput,
+        form.name || "member"
+      );
+
+      setForm((prev) => ({
+        ...prev,
+        avatar: path,
+      }));
+
+      setAvatarUrl(url);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
 
@@ -77,9 +122,6 @@ export default function MemberForm({
     }));
   };
 
-  // -----------------------------
-  // TAGS
-  // -----------------------------
   const addTag = () => {
     if (!tagInput.trim()) return;
 
@@ -98,120 +140,145 @@ export default function MemberForm({
     }));
   };
 
-  // -----------------------------
-  // SUBMIT
-  // -----------------------------
+
+  const handleDeleteMember = async () => {
+    if (!initialData?.id) return;
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this member? This cannot be undone."
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await deleteMember(initialData.id);
+      navigate("/");
+    } catch (err) {
+      console.error("Failed to delete member:", err);
+    }
+  };
+
+
+
+
   const handleSubmit = () => {
     onSubmit(form);
   };
 
-  // -----------------------------
-  // UI
-  // -----------------------------
+  
   return (
     <div className="space-y-4">
 
-      {/* AVATAR */}
       <div className="flex flex-col items-center gap-2">
         <img
           src={avatarUrl || "/default-avatar.png"}
           className="w-20 h-20 rounded-full object-cover border"
         />
-  <button>
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleAvatarUpload}
-          disabled={uploading}
-        /></button>
-
-        {uploading && (
-          <p className="text-xs text-blue-500">Uploading...</p>
-        )}
-      </div>
-
-      {/* BASIC INFO */}
-      <input
-        name="name"
-        value={form.name}
-        onChange={handleChange}
-        placeholder="Name"
-        className="w-full border p-2 rounded"
-      />
-
-      <input
-        name="display_name"
-        value={form.display_name}
-        onChange={handleChange}
-        placeholder="Display Name"
-        className="w-full border p-2 rounded"
-      />
-
-      <input
-        name="pronouns"
-        value={form.pronouns}
-        onChange={handleChange}
-        placeholder="Pronouns"
-        className="w-full border p-2 rounded"
-      />
-
-      {/* DESCRIPTION */}
-      <textarea
-        name="description"
-        value={form.description}
-        onChange={handleChange}
-        placeholder="Description / Bio"
-        className="w-full border p-2 rounded h-24"
-      />
-
-      {/* COLOR */}
-      <div className="flex items-center gap-2">
-        <label className="text-sm">Color:</label>
-
-        <input
-          type="color"
-          name="color"
-          value={form.color}
-          onChange={handleChange}
-          className="w-10 h-10 border rounded"
-        />
-      </div>
-
-      {/* TAGS */}
-      <div className="space-y-2">
-
-        <div className="flex gap-2">
+        <button>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              disabled={uploading}
+            />
+          </button>
           <input
-            value={tagInput}
-            onChange={(e) => setTagInput(e.target.value)}
-            placeholder="Add tag..."
-            className="border p-2 rounded w-full"
+            type="text"
+            placeholder="Or paste image URL..."
+            value={avatarInput}
+            onChange={(e) => setAvatarInput(e.target.value)}
           />
 
           <button
             type="button"
-            onClick={addTag}
-            className="px-3 py-2 border rounded"
+            onClick={handleAvatarFromUrl}
+            disabled={uploading}
           >
-            Add
+            Use URL
           </button>
+
+          {uploading && (
+            <p className="text-xs text-blue-500">Uploading...</p>
+          )}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {form.tags.map((tag) => (
-            <span
-              key={tag}
-              className="px-2 py-1 border rounded text-sm flex items-center gap-2"
+        <input
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          placeholder="Name"
+          className="w-full border p-2 rounded"
+        />
+
+        <input
+          name="display_name"
+          value={form.display_name}
+          onChange={handleChange}
+          placeholder="Display Name"
+          className="w-full border p-2 rounded"
+        />
+
+        <input
+          name="pronouns"
+          value={form.pronouns}
+          onChange={handleChange}
+          placeholder="Pronouns"
+          className="w-full border p-2 rounded"
+        />
+
+        <textarea
+          name="description"
+          value={form.description}
+          onChange={handleChange}
+          placeholder="Description / Bio"
+          className="w-full border p-2 rounded h-24"
+        />
+
+        <div className="flex items-center gap-2">
+          <label className="text-sm">Color:</label>
+
+          <input
+            type="color"
+            name="color"
+            value={form.color}
+            onChange={handleChange}
+            className="w-10 h-10 border rounded"
+          />
+        </div>
+
+        <div className="space-y-2">
+
+          <div className="flex gap-2">
+            <input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              placeholder="Add tag..."
+              className="border p-2 rounded w-full"
+            />
+
+            <button
+              type="button"
+              onClick={addTag}
+              className="px-3 py-2 border rounded"
             >
-              {tag}
-              <button onClick={() => removeTag(tag)}>×</button>
-            </span>
-          ))}
-        </div>
+              Add
+            </button>
+          </div>
 
-      </div>
+          <div className="flex flex-wrap gap-2">
+            {form.tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-2 py-1 border rounded text-sm flex items-center gap-2"
+              >
+                {tag}
+                <button onClick={() => removeTag(tag)}>×</button>
+              </span>
+            ))}
+          </div>
 
-      {/* SUBMIT */}
+       </div>
+
       <button
         onClick={handleSubmit}
         disabled={uploading || submitting}
@@ -219,7 +286,12 @@ export default function MemberForm({
       >
         Save Member
       </button>
-
+      <button
+        onClick={handleDeleteMember}
+        className="w-full bg-blue-500 text-red-500 p-2 rounded"
+      >
+        Delete Member
+      </button>
     </div>
   );
 }

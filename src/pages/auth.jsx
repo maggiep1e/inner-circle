@@ -13,12 +13,11 @@ import { useNavigate } from "react-router-dom";
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [logon, setLogon] = useState("login"); // "login" or "register"
+  const [logon, setLogon] = useState("login");
   const [error, setError] = useState("");
-  const [mode, setMode] = useState("system"); // "system" or "singlet"
+  const [mode, setMode] = useState("system");
   const navigate = useNavigate()
 
-  // --- Email / Password login / register ---
   async function handleSubmit() {
     setError("");
     try {
@@ -54,7 +53,6 @@ export default function Auth() {
     }
   }
 
-  // --- OAuth login / register ---
   async function handleOAuthSignIn(provider) {
     setError("");
     try {
@@ -64,8 +62,7 @@ export default function Auth() {
 
       const user = result?.user;
       if (!user) return console.log("No user returned from OAuth");
-
-      // Check if profile exists
+      
       const existingProfile = await getProfiles("user", user.id);
       if (!existingProfile) {
         await createProfile({

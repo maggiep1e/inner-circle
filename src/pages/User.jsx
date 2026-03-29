@@ -13,7 +13,6 @@ export default function UserSettingsPage() {
   const [color, setColor] = useState("");
   const [plan, setPlan] = useState("free");
 
-  // sync store → local form state
   useEffect(() => {
     if (!profile) return;
 
@@ -38,7 +37,6 @@ export default function UserSettingsPage() {
 
       <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-2xl space-y-6">
 
-        {/* AVATAR */}
         <div className="flex flex-col items-center gap-3">
           <img
             src={profileAvatarUrl}
@@ -55,7 +53,6 @@ export default function UserSettingsPage() {
           /></button>
         </div>
 
-        {/* FORM */}
         <div className="space-y-4">
 
           <input
@@ -88,7 +85,7 @@ export default function UserSettingsPage() {
 
         </div>
 
-        {/* SAVE */}
+
         <div className="flex justify-end">
           <button
             onClick={() =>

@@ -58,72 +58,65 @@ export default function EditFolder() {
 
       <h1 className="text-xl font-bold">Edit Folder</h1>
 
-      {/* NAME */}
-      <input
-        value={folder.name || ""}
-        onChange={(e) => updateField("name", e.target.value)}
-        className="w-full border p-2 rounded"
-        placeholder="Folder name"
-      />
+        <input
+          value={folder.name || ""}
+          onChange={(e) => updateField("name", e.target.value)}
+          className="w-full border p-2 rounded"
+          placeholder="Folder name"
+        />
 
-      {/* EMOJI */}
-<div className="relative">
+        <div className="relative">
 
-  <label className="text-sm block mb-1">Folder Emoji</label>
+          <label className="text-sm block mb-1">Folder Emoji</label>
 
-  <button
-    type="button"
-    onClick={() => setShowPicker((v) => !v)}
-    className="w-full border p-2 rounded text-left"
-  >
-    {folder.emoji || "Pick an emoji 🙂"}
-  </button>
+          <button
+            type="button"
+            onClick={() => setShowPicker((v) => !v)}
+            className="w-full border p-2 rounded text-left"
+          >
+            {folder.emoji || "Pick an emoji 🙂"}
+          </button>
 
-  {showPicker && (
-    <div className="absolute z-50 mt-2">
-      <EmojiPicker
-        onEmojiClick={(emojiData) => {
-          setFolder((prev) => ({
-            ...prev,
-            emoji: emojiData.emoji,
-          }));
-          setShowPicker(false);
-        }}
-      />
-    </div>
-  )}
+          {showPicker && (
+            <div className="absolute z-50 mt-2">
+              <EmojiPicker
+                onEmojiClick={(emojiData) => {
+                  setFolder((prev) => ({
+                    ...prev,
+                    emoji: emojiData.emoji,
+                  }));
+                  setShowPicker(false);
+                }}
+              />
+            </div>
+          )}
 
-</div>
+        </div>
+        <div className="mt-4">
 
-{/* COLOR */}
-<div className="mt-4">
+          <label className="text-sm block mb-1">Folder Color</label>
 
-  <label className="text-sm block mb-1">Folder Color</label>
+          <input
+            type="color"
+            value={folder.color || "#3b82f6"}
+            onChange={(e) =>
+              setFolder((prev) => ({
+                ...prev,
+                color: e.target.value,
+              }))
+            }
+            className="w-full h-10 border rounded cursor-pointer"
+          />
 
-  <input
-    type="color"
-    value={folder.color || "#3b82f6"}
-    onChange={(e) =>
-      setFolder((prev) => ({
-        ...prev,
-        color: e.target.value,
-      }))
-    }
-    className="w-full h-10 border rounded cursor-pointer"
-  />
+        </div>
+      <div
+        className="p-3 rounded text-white text-lg flex items-center gap-2"
+        style={{ backgroundColor: folder.color || "#3b82f6" }}
+      >
+        <span className="text-2xl">{folder.emoji}</span>
+        <span>{folder.name}</span>
+      </div>
 
-</div>
-
-      {/* PREVIEW */}
-<div
-  className="p-3 rounded text-white text-lg flex items-center gap-2"
-  style={{ backgroundColor: folder.color || "#3b82f6" }}
->
-  <span className="text-2xl">{folder.emoji}</span>
-  <span>{folder.name}</span>
-</div>
-
-      {/* SAVE */}
       <button
         onClick={save}
         disabled={loading}

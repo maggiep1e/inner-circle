@@ -1,4 +1,3 @@
-// utils/memberAdapters.js
 
 export function normalizeMember(input, source) {
   return {

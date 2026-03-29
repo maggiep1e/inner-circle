@@ -19,7 +19,6 @@ export default function CurrentFront() {
     <>
       <Card>
         <div>
-          {/* HEADER */}
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-bold text-lg">CURRENT FRONT</h2>
 
@@ -30,8 +29,6 @@ export default function CurrentFront() {
               + Add
             </button>
           </div>
-
-          {/* CONTENT */}
           {currentMembers.length > 0 ? (
             <div className="flex flex-wrap gap-4">
               {currentMembers.map((member) => (
@@ -84,7 +81,6 @@ export default function CurrentFront() {
         </div>
       </Card>
 
-      {/* MODAL */}
       {open && systemId && (
         <div
           onClick={() => setOpen(false)}

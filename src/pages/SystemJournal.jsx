@@ -64,7 +64,6 @@ export default function SystemJournal() {
 
       <h1 className="text-2xl font-bold">System Journal</h1>
 
-      {/* CREATE ENTRY */}
       <div className="space-y-2 border p-4 rounded bg-white dark:bg-zinc-900">
         <input
           placeholder="Title"
@@ -91,7 +90,6 @@ export default function SystemJournal() {
         </button>
       </div>
 
-      {/* ENTRIES */}
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">Previous Entries</h2>
 
@@ -128,7 +126,6 @@ export default function SystemJournal() {
 )}
       </div>
 
-      {/* MODAL */}
       {selectedEntry && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <div className="max-w-2xl w-full mx-4 bg-white dark:bg-zinc-900 rounded-xl p-6">

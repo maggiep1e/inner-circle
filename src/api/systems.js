@@ -40,7 +40,7 @@ export async function createSystem(data) {
         name: data.name,
         description: data.description,
         color: data.color,
-        avatar: data.avatar, // 🔥 THIS MUST EXIST
+        avatar: data.avatar,
         user_id: data.user_id,
       },
     ])

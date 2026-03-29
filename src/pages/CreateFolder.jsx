@@ -21,7 +21,7 @@ export default function CreateFolder() {
       await createFolder({
         name,
         system_id: systemId,
-        user_id: user.id, // replace with session user if you have it
+        user_id: user.id, 
         member_ids: [],
       });
 
@@ -38,26 +38,26 @@ export default function CreateFolder() {
     <Card>
          <button onClick={() => navigate(-1)}>
                 ← Back
-      </button>
-    <div className="p-6 max-w-md mx-auto">
-      <h1 className="text-xl font-bold mb-4">Create Folder</h1>
+        </button>
+        <div className="p-6 max-w-md mx-auto">
+          <h1 className="text-xl font-bold mb-4">Create Folder</h1>
 
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Folder name"
-        className="w-full border p-2 rounded mb-3"
-      />
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Folder name"
+            className="w-full border p-2 rounded mb-3"
+          />
 
-      <button
-        onClick={handleCreate}
-        disabled={loading}
-        className="w-full bg-blue-500 text-white p-2 rounded"
-      >
-        {loading ? "Creating..." : "Create Folder"}
-      </button>
-    </div>
-    </Card>
+          <button
+            onClick={handleCreate}
+            disabled={loading}
+            className="w-full bg-blue-500 text-white p-2 rounded"
+          >
+            {loading ? "Creating..." : "Create Folder"}
+          </button>
+        </div>
+      </Card>
     </>
   );
 }

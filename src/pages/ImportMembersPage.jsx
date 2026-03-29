@@ -18,20 +18,15 @@ export default function ImportMembersPage() {
   const [source, setSource] = useState("");
   const [file, setFile] = useState(null);
   const [apiKey, setApiKey] = useState("");
-
   const [rawMembers, setRawMembers] = useState([]);
   const [loading, setLoading] = useState(false);
-
   const [progress, setProgress] = useState({ completed: 0, total: 0 });
-
   const [results, setResults] = useState({
     added: [],
     skipped: [],
   });
 
-  // -----------------------------
-  // LOAD SOURCE DATA
-  // -----------------------------
+
   const loadData = async () => {
     setLoading(true);
 
@@ -56,9 +51,7 @@ export default function ImportMembersPage() {
     }
   };
 
-  // -----------------------------
-  // IMPORT (CLEAN + CENTRALIZED)
-  // -----------------------------
+
   const runImport = async () => {
     setStep(3);
     setLoading(true);
@@ -84,9 +77,7 @@ export default function ImportMembersPage() {
     }
   };
 
-  // -----------------------------
-  // UI
-  // -----------------------------
+
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
 
@@ -94,7 +85,6 @@ export default function ImportMembersPage() {
         Importing into system: <b>{system.name}</b>
       </div>
 
-      {/* STEP INDICATOR */}
       <div className="flex gap-2 text-sm">
         {["Source", "Preview", "Importing", "Results"].map((s, i) => (
           <div
@@ -108,7 +98,6 @@ export default function ImportMembersPage() {
         ))}
       </div>
 
-      {/* STEP 1 */}
       {step === 1 && (
         <div className="space-y-4">
           <select
@@ -147,7 +136,6 @@ export default function ImportMembersPage() {
         </div>
       )}
 
-      {/* STEP 2 */}
       {step === 2 && (
         <div className="space-y-4">
           <h2 className="font-semibold">
@@ -180,7 +168,6 @@ export default function ImportMembersPage() {
         </div>
       )}
 
-      {/* STEP 3 */}
       {step === 3 && (
         <div>
           <div className="w-full bg-gray-200 h-4 rounded overflow-hidden">
@@ -200,7 +187,6 @@ export default function ImportMembersPage() {
         </div>
       )}
 
-      {/* STEP 4 */}
       {step === 4 && (
         <div className="space-y-4">
           <h2 className="font-semibold text-green-600">

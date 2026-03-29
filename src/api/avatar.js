@@ -4,9 +4,9 @@ const BUCKET = "avatars";
 
 function sanitizeFileName(name) {
   return name
-    .replace(/[{}]/g, "")      // remove { }
-    .replace(/\s/g, "_")       // spaces → _
-    .replace(/[^a-zA-Z0-9._-]/g, ""); // remove weird chars
+    .replace(/[{}]/g, "")     
+    .replace(/\s/g, "_")       
+    .replace(/[^a-zA-Z0-9._-]/g, "");
 }
 
 export async function uploadFile(file, folder = "avatars") {
@@ -32,9 +32,7 @@ export async function uploadFile(file, folder = "avatars") {
   };
 }
 
-/**
- * Convert storage path → public URL
- */
+
 export function getPublicUrl(path) {
   if (!path) return null;
 
@@ -45,34 +43,32 @@ export function getPublicUrl(path) {
   return data?.publicUrl || null;
 }
 
-export async function uploadAvatarFromUrl(url, fileName) {
-  if (!url) return null;
-
+export async function uploadFileFromUrl(url, filename = "avatar") {
   try {
-    // 1. download image
     const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch file");
+
     const blob = await res.blob();
 
-    // 2. upload to Supabase Storage
-    const path = `avatars/${fileName}`;
+    const contentType = res.headers.get("content-type");
+    const ext = contentType?.split("/")[1] || "png";
 
-    const { error } = await supabase.storage
-      .from("avatars")
-      .upload(path, blob, {
-        upsert: true,
-        contentType: blob.type,
-      });
+    const file = new File([blob], `${filename}.${ext}`, {
+      type: contentType || "image/png",
+    });
 
-    if (error) throw error;
-
-    // 3. get public URL
-    const { data } = supabase.storage
-      .from("avatars")
-      .getPublicUrl(path);
-
-    return data.publicUrl;
+    return await uploadFile(file);
   } catch (err) {
-    console.error("Avatar upload failed:", err);
-    return null;
+    console.error("uploadFileFromUrl error:", err);
+    throw err;
   }
 }
+
+
+  export function resolveAvatar(pathOrUrl) {
+  if (!pathOrUrl) return "/default-avatar.png";
+
+  if (pathOrUrl.startsWith("http")) return pathOrUrl;
+
+  return getPublicUrl(pathOrUrl);
+  };

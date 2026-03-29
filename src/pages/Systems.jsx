@@ -1,9 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSystemStore } from "../store/systemStore";
 import { useProfileStore } from "../store/profileStore";
 import { useSessionStore } from "../store/sessionStore";
-import { getPublicUrl } from "../api/avatar";
+import { getPublicUrl, resolveAvatar } from "../api/avatar";
 
 import CurrentFront from "../components/CurrentFront";
 import Card from "../components/Card";
@@ -11,56 +11,34 @@ import Card from "../components/Card";
 export default function SystemsPage() {
   const navigate = useNavigate();
 
-  // -----------------------------
-  // STORES
-  // -----------------------------
   const systems = useSystemStore((s) => s.systems);
   const loadSystems = useSystemStore((s) => s.loadSystems);
   const hydrateSystem = useSystemStore((s) => s.hydrateSystem);
   const ensureCurrentSystem = useSystemStore((s) => s.ensureCurrentSystem);
-
   const profile = useProfileStore((s) => s.profile);
   const userId = useSessionStore((s) => s.userId);
 
-  // -----------------------------
-  // LOAD SYSTEMS
-  // -----------------------------
   useEffect(() => {
     if (!userId) return;
     loadSystems(userId);
   }, [userId, loadSystems]);
 
-  // -----------------------------
-  // AUTO-SELECT FIRST SYSTEM
-  // -----------------------------
   useEffect(() => {
     if (!systems?.length) return;
 
     ensureCurrentSystem();
   }, [systems, ensureCurrentSystem]);
 
-  // -----------------------------
-  // HELPERS
-  // -----------------------------
-  const getAvatar = (path) =>
-    path ? getPublicUrl(path) : "/default-avatar.png";
-
-  // -----------------------------
-  // UI
-  // -----------------------------
   return (
     <div className="flex flex-wrap md:flex-nowrap gap-6 p-4">
 
-      {/* CURRENT FRONT */}
       <CurrentFront />
 
-      {/* SYSTEMS LIST */}
       <div className="w-84 space-y-3">
         <Card>
           <h2 className="text-xl font-bold p-2">Systems</h2>
 
           {systems?.map((sys) => {
-            const avatar = getAvatar(sys.avatar);
 
             return (
               <div
@@ -72,10 +50,10 @@ export default function SystemsPage() {
                 className="p-3 rounded cursor-pointer shadow-sm hover:opacity-90 transition flex flex-col gap-2"
                 style={{ backgroundColor: sys.color || "#ffffff" }}
               >
-                {/* TOP ROW */}
+  
                 <div className="flex items-center gap-3">
                   <img
-                    src={avatar}
+                    src={resolveAvatar(sys?.avatar)}
                     alt="system avatar"
                     className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-900"
                   />
@@ -85,7 +63,6 @@ export default function SystemsPage() {
                   </div>
                 </div>
 
-                {/* ACTION */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -108,7 +85,6 @@ export default function SystemsPage() {
         </Card>
       </div>
 
-      {/* SETTINGS */}
       <Card>
         <h2 className="text-xl font-bold p-2">Settings</h2>
 

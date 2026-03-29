@@ -18,9 +18,6 @@ import { getFoldersBySystem } from "../api/folders";
 import { getPublicUrl } from "../api/avatar";
 
 export const useSystemStore = create((set, get) => ({
-  // --------------------
-  // STATE
-  // --------------------
   systemId: null,
   systems: [],
   members: [],
@@ -28,18 +25,14 @@ export const useSystemStore = create((set, get) => ({
   currentFront: [],
   currentSystem: null,
 
-  // --------------------
-  // HELPERS
-  // --------------------
   resolveAvatar: (path) => {
     if (!path) return null;
     if (path.startsWith("http")) return path;
     return getPublicUrl(path);
   },
 
-  // --------------------
-  // SYSTEMS (PURE LOAD)
-  // --------------------
+// systems
+
   loadSystems: async (userId) => {
     if (!userId) return [];
 
@@ -61,9 +54,6 @@ export const useSystemStore = create((set, get) => ({
     }
   },
 
-  // --------------------
-  // HYDRATE ONE SYSTEM (MAIN FIX)
-  // --------------------
   hydrateSystem: async (systemId) => {
     if (!systemId) return;
 
@@ -81,9 +71,6 @@ export const useSystemStore = create((set, get) => ({
     ]);
   },
 
-  // --------------------
-  // SYSTEM CRUD
-  // --------------------
   addSystem: async (data) => {
     const created = await createSystem({
       ...data,
@@ -125,28 +112,41 @@ export const useSystemStore = create((set, get) => ({
   },
 
   ensureCurrentSystem: async () => {
-  const state = get();
+      const state = get();
 
-  // already valid
-  if (state.currentSystem?.id) return;
+      if (state.currentSystem?.id) return;
 
-  // wait until systems exist
-  if (!state.systems?.length) return;
+      if (!state.systems?.length) return;
 
-  const first = state.systems[0];
+      const first = state.systems[0];
 
-  if (!first) return;
+      if (!first) return;
 
-  set({ currentSystem: first });
+      set({ currentSystem: first });
 
-  // optionally hydrate everything
-  await state.loadMembers?.(first.id);
-  await state.loadCurrentFront?.(first.id);
-  await state.loadFolders?.(first.id);
-},
-  // --------------------
-  // MEMBERS (PURE)
-  // --------------------
+      await state.loadMembers?.(first.id);
+      await state.loadCurrentFront?.(first.id);
+      await state.loadFolders?.(first.id);
+    },
+
+    deleteSystem: async (id) => {
+      const { error } = await supabase
+        .from("systems")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      set((state) => ({
+        systems: state.systems.filter((s) => s.id !== id),
+        currentSystem:
+          state.currentSystem?.id === id ? null : state.currentSystem,
+      }));
+    },
+
+
+//members 
+
   loadMembers: async (systemId) => {
     if (!systemId) return;
 
@@ -209,13 +209,11 @@ export const useSystemStore = create((set, get) => ({
     }));
   },
 
-  // --------------------
-  // FRONT SYSTEM
-  // --------------------
+
+//fronting 
 setFront: async (systemId, memberIds) => {
   if (!systemId) return;
 
-  // 🔥 HARD SAFETY CHECK
   const safeIds = Array.isArray(memberIds) ? memberIds : [];
 
   await supabase
@@ -225,7 +223,7 @@ setFront: async (systemId, memberIds) => {
 
   set({ currentFront: safeIds });
 },
-  // ensures front always belongs to system
+
 loadCurrentFront: async (systemId) => {
   if (!systemId) return;
 
@@ -268,9 +266,7 @@ setCurrentFront: async (systemId, memberIds) => {
       ),
     })),
 
-  // --------------------
-  // FOLDERS (PURE)
-  // --------------------
+//folders 
   loadFolders: async (systemId) => {
     const id = systemId || get().systemId;
     if (!id) return;

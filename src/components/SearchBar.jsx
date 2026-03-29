@@ -11,15 +11,13 @@ export default function SearchBar({
   const [activeIndex, setActiveIndex] = useState(0);
   const [open, setOpen] = useState(false);
 
-  // 🔍 fuzzy engine
   const fuse = useMemo(() => {
     return new Fuse(items, {
       keys: ["name", "display_name"],
-      threshold: 0.35, // lower = stricter, higher = fuzzier
+      threshold: 0.35, 
     });
   }, [items]);
 
-  // 🔎 search logic
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
@@ -34,7 +32,8 @@ export default function SearchBar({
     setOpen(true);
   }, [query, fuse]);
 
-  // ⌨️ keyboard navigation
+  
+  
   const handleKeyDown = (e) => {
     if (!open) return;
 
@@ -65,7 +64,6 @@ export default function SearchBar({
 
   return (
     <div className="relative w-full">
-      {/* INPUT */}
       <input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
@@ -78,8 +76,6 @@ export default function SearchBar({
           focus:ring-2 focus:ring-blue-500
         "
       />
-
-      {/* DROPDOWN */}
       {open && results.length > 0 && (
         <div className="
           absolute z-50 mt-2 w-full

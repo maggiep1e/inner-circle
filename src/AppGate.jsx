@@ -22,7 +22,6 @@ export default function AppGate() {
 
   const [loading, setLoading] = useState(true);
 
-  // prevents double bootstrap (IMPORTANT FIX)
   const bootedRef = useRef(false);
 
   useEffect(() => {
@@ -41,7 +40,6 @@ export default function AppGate() {
       }
 
       try {
-        // guard against double execution
         if (!bootedRef.current) {
           bootedRef.current = true;
 
@@ -55,12 +53,10 @@ export default function AppGate() {
       }
     };
 
-    // 1. initial session
     supabase.auth.getSession().then(({ data }) => {
       bootstrap(data.session);
     });
 
-    // 2. auth changes
     const { data: listener } =
       supabase.auth.onAuthStateChange((_event, session) => {
         bootstrap(session);
@@ -69,12 +65,10 @@ export default function AppGate() {
     return () => {
       mounted = false;
       listener.subscription.unsubscribe();
+      ensureCurrentSystem();
     };
-
-    ensureCurrentSystem();
   }, [setUser, loadProfile, setProfile, setProfileAvatarUrl, loadSystems, ensureCurrentSystem]);
 
-  // ---------------- UI WRAPPER ----------------
   const Layout = ({ children }) => (
     <div className="flex h-screen w-screen bg-white dark:bg-zinc-900 text-black dark:text-white">
       <div className="flex-1 flex flex-col overflow-auto">

@@ -1,4 +1,3 @@
-import MemberMarkdown from "./MemberMarkdown";
 
 export default function FriendProfile({ friend, userId, onEdit, onDone }) {
   const otherUser = friend.requester.id === userId ? friend.receiver : friend.requester;
@@ -45,7 +44,7 @@ export default function FriendProfile({ friend, userId, onEdit, onDone }) {
 
           {otherUser.bio ? (
             <div className="mt-4">
-              <MemberMarkdown text={otherUser.bio} />
+              <p>{otherUser.bio} </p>
             </div>
           ) : (
             <p className="text-gray-400 mt-4">No bio yet.</p>

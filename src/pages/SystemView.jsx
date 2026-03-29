@@ -7,38 +7,29 @@ import { getPublicUrl } from "../api/avatar";
 import SystemForm from "../components/SystemForm";
 import SearchBar from "../components/SearchBar";
 import { getMembersByFolder, deleteFolder } from "../api/folders";
+import { resolveAvatar } from "../api/avatar";
 
 export default function SystemView() {
   const navigate = useNavigate();
   const { id: systemIdParam } = useParams();
 
-  // -----------------------------
-  // STORE
-  // -----------------------------
   const systems = useSystemStore((s) => s.systems);
   const currentSystem = useSystemStore((s) => s.currentSystem);
-
   const members = useSystemStore((s) => s.members);
   const folders = useSystemStore((s) => s.systemFolders);
-
   const currentFront = useSystemStore((s) => s.currentFront);
   const setCurrentFront = useSystemStore((s) => s.setCurrentFront);
-
   const hydrateSystem = useSystemStore((s) => s.hydrateSystem);
   const loadMembers = useSystemStore((s) => s.loadMembers);
   const loadFolders = useSystemStore((s) => s.loadFolders);
   const updateSystem = useSystemStore((s) => s.updateSystem);
+  const deleteSystem = useSystemStore((s) => s.deleteSystem);
 
-  // -----------------------------
-  // LOCAL STATE
-  // -----------------------------
   const [edit, setEdit] = useState(false);
   const [activeFolder, setActiveFolder] = useState(null);
   const [folderMembers, setFolderMembers] = useState({});
 
-  // -----------------------------
-  // SYSTEM SELECT LOGIC
-  // -----------------------------
+
   useEffect(() => {
     if (!systems?.length) return;
 
@@ -52,9 +43,6 @@ export default function SystemView() {
     }
   }, [systemIdParam, systems, currentSystem?.id, hydrateSystem]);
 
-  // -----------------------------
-  // LOAD DATA
-  // -----------------------------
   useEffect(() => {
     if (!currentSystem?.id) return;
 
@@ -62,9 +50,9 @@ export default function SystemView() {
     loadFolders(currentSystem.id);
   }, [currentSystem?.id, loadMembers, loadFolders]);
 
-  // -----------------------------
-  // FRONT TOGGLE LOGIC (NEW)
-  // -----------------------------
+
+
+
   const toggleFront = (memberId) => {
     const current = Array.isArray(currentFront) ? currentFront : [];
 
@@ -75,12 +63,9 @@ export default function SystemView() {
     setCurrentFront(updated);
   };
 
-  // -----------------------------
-  // DERIVED VALUES
-  // -----------------------------
   const systemAvatar = useMemo(() => {
     if (!currentSystem?.avatar) return "/default-avatar.png";
-    return getPublicUrl(currentSystem.avatar);
+    return resolveAvatar(currentSystem?.avatar);
   }, [currentSystem?.avatar]);
 
   const sortedMembers = useMemo(() => {
@@ -99,9 +84,7 @@ export default function SystemView() {
     (folderMembers[activeFolder?.id] || []).map((m) => m.id)
   );
 
-  // -----------------------------
-  // FOLDERS
-  // -----------------------------
+
   const openFolder = async (folder) => {
     if (activeFolder?.id === folder.id) {
       setActiveFolder(null);
@@ -164,18 +147,31 @@ export default function SystemView() {
     }));
   };
 
-  // -----------------------------
-  // SAVE SYSTEM
-  // -----------------------------
+
   const handleSave = async (form) => {
     await updateSystem(currentSystem.id, form);
-    await hydrateSystem(currentSystem.id);
+    hydrateSystem(currentSystem.id);
     setEdit(false);
   };
 
-  // -----------------------------
-  // SAFETY GUARD
-  // -----------------------------
+  const handleDeleteSystem = async () => {
+  if (!currentSystem?.id) return;
+
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this system? This will delete all members and cannot be undone."
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    await deleteSystem(currentSystem.id);
+    navigate("/");
+  } catch (err) {
+    console.error("Failed to delete system:", err);
+  }
+};
+
+
   if (!currentSystem) {
     return (
       <div className="p-6">
@@ -184,13 +180,10 @@ export default function SystemView() {
     );
   }
 
-  // -----------------------------
-  // UI
-  // -----------------------------
+ 
   return (
     <div className="p-6 space-y-6">
 
-      {/* BACK */}
       <div className="flex gap-2">
         <button onClick={() => navigate("/systems")}>
           ← Back
@@ -206,7 +199,8 @@ export default function SystemView() {
         </button>
       </div>
 
-      {/* HEADER */}
+
+
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow overflow-hidden">
         <div
           className="h-32 flex items-end p-4 relative"
@@ -228,17 +222,24 @@ export default function SystemView() {
           )}
         </div>
 
-        <div className="p-4 pt-0">
+       <div className="p-4 pt-0 flex gap-2">
           <button
             onClick={() => setEdit(true)}
             className="border px-3 py-1 rounded"
           >
             Edit
           </button>
-        </div>
-      </div>
 
-      {/* FOLDERS */}
+          <button
+            onClick={handleDeleteSystem}
+            className="border px-3 py-1 rounded text-red-500 border-red-500 hover:bg-red-50"
+          >
+            Delete
+          </button>
+        </div>
+        </div>
+
+
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow p-4">
         <h2 className="font-semibold mb-3">Folders</h2>
 
@@ -315,12 +316,16 @@ export default function SystemView() {
         })}
       </div>
 
-      {/* MEMBERS */}
+
+
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow p-4">
+        <div className="flex justify-between">
         <h2 className="font-semibold mb-3">
           Members ({members.length})
         </h2>
-
+        <button className=" mb-3" onClick={() =>
+    navigate(`/systems/${currentSystem.id}/members/new`)}>+ Add Member</button>
+        </div>
         <SearchBar
           items={members}
           placeholder="Search members..."
@@ -342,7 +347,8 @@ export default function SystemView() {
                     : ""
                 }`}
               >
-                {/* NAV AREA */}
+
+
                 <div
                   className="flex items-center gap-2 flex-1 cursor-pointer"
                   onClick={() =>
@@ -367,7 +373,8 @@ export default function SystemView() {
                   </span>
                 </div>
 
-                {/* FRONT TOGGLE */}
+
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -383,7 +390,7 @@ export default function SystemView() {
         </div>
       </div>
 
-      {/* EDIT MODAL */}
+
       {edit && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
           <div className="bg-white dark:bg-zinc-900 p-6 rounded w-96">

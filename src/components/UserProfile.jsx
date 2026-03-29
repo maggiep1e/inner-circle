@@ -1,6 +1,4 @@
-// src/components/UserProfile.jsx
 import { useNavigate } from "react-router-dom";
-import { useSessionStore } from "../store/sessionStore";
 import { useProfileStore } from "../store/profileStore";
 
 export default function UserProfile({ onClose }) {
@@ -14,7 +12,6 @@ export default function UserProfile({ onClose }) {
 
       <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 w-full max-w-md space-y-4">
 
-        {/* HEADER */}
         <div className="flex items-center gap-3">
           <img
             src={avatarUrl || "/default-avatar.png"}
@@ -32,12 +29,10 @@ export default function UserProfile({ onClose }) {
           </div>
         </div>
 
-        {/* INFO */}
         <div className="text-sm text-gray-600 dark:text-gray-300">
           {profile?.description || "No bio yet."}
         </div>
 
-        {/* ACTIONS */}
         <div className="flex justify-between pt-4 border-t">
 
           <button

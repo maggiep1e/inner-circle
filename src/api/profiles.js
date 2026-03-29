@@ -1,27 +1,24 @@
 import { supabase } from "../lib/supabase";
 
-// --- Fetch a profile by owner_id / type ---
 export async function getProfiles(type, ownerId) {
   if (!ownerId) throw new Error("Owner ID required");
 
   const { data, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", ownerId); // PK = id (auth user id)
+    .eq("id", ownerId); 
 
   if (error) throw error;
 
   return data?.length ? data[0] : null;
 }
 
-// --- Create or update a profile safely ---
 export async function updateProfile(profile) {
   if (!profile?.id) throw new Error("Profile must have an id");
 
-  // Upsert using id as PK, safe for duplicates
   const { data, error } = await supabase
     .from("profiles")
-    .upsert(profile, { onConflict: "id" }) // PK is 'id'
+    .upsert(profile, { onConflict: "id" })
     .select()
     .single();
 
@@ -29,7 +26,6 @@ export async function updateProfile(profile) {
   return data;
 }
 
-// --- Explicit create if needed (rare now) ---
 export async function createProfile(profileData) {
   if (!profileData?.id) throw new Error("Profile must have an id");
 
@@ -43,7 +39,6 @@ export async function createProfile(profileData) {
   return data;
 }
 
-// --- Delete a profile ---
 export async function deleteProfile(id) {
   if (!id) throw new Error("Profile id required");
 
@@ -57,7 +52,6 @@ export async function deleteProfile(id) {
   return data;
 }
 
-// --- Upload avatar and return public URL ---
 export async function uploadAvatar(file, userId) {
   if (!file || !userId) return null;
 
@@ -78,7 +72,6 @@ export async function uploadAvatar(file, userId) {
   return urlData.publicUrl;
 }
 
-// --- Get profile by user id ---
 export async function getProfile(userId) {
   if (!userId) throw new Error("User ID required");
 
@@ -93,7 +86,6 @@ export async function getProfile(userId) {
 }
 
 
-// --- Create OR update profile (recommended) ---
 export async function upsertProfile(profile) {
   if (!profile?.id) throw new Error("Profile must have an id");
 

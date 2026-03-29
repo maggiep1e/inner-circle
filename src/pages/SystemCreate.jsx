@@ -17,13 +17,9 @@ export default function SystemCreate() {
     color: "#ffffff",
     avatar: ""
   });
-
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
 
-  // -----------------------------
-  // avatar upload FIX
-  // -----------------------------
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -46,9 +42,6 @@ export default function SystemCreate() {
     }
   };
 
-  // -----------------------------
-  // submit FIX
-  // -----------------------------
   const handleCreate = async () => {
     if (!user?.id) return;
  
@@ -74,8 +67,6 @@ export default function SystemCreate() {
     <Card>
       <div className="p-6 w-full space-y-4">
         <h1 className="text-xl font-bold">Create System</h1>
-
-        {/* Avatar */}
         <div className="space-y-2">
           <p className="text-zinc-400 text-sm">Avatar</p>
 
@@ -95,8 +86,6 @@ export default function SystemCreate() {
             <p className="text-xs text-blue-500">Uploading...</p>
           )}
         </div>
-
-        {/* Name */}
         <input
           placeholder="Name"
           value={form.name}
@@ -105,8 +94,6 @@ export default function SystemCreate() {
           }
           className="p-2 w-full border rounded"
         />
-
-        {/* Description */}
         <textarea
           placeholder="Description"
           value={form.description}
@@ -115,8 +102,6 @@ export default function SystemCreate() {
           }
           className="p-2 w-full border rounded"
         />
-
-        {/* Color */}
         <div>
           <p className="text-zinc-400 text-sm mb-1">Color</p>
           <input
@@ -128,7 +113,6 @@ export default function SystemCreate() {
           />
         </div>
 
-        {/* Submit */}
         <button
           className="w-full bg-blue-500 text-white p-2 rounded"
           onClick={handleCreate}
