@@ -50,12 +50,6 @@ export default function CurrentFront() {
                     key={member.id}
                     className="relative flex flex-col items-center w-20 group"
                   >
-                    <button
-                      onClick={() => removeFromFront(member.id)}
-                      className="absolute -top-2 -right-2 flex w-5 h-5 rounded-full bg-red-500 text-white opacity-0 group-hover:opacity-100 transition"
-                    >
-                      X
-                    </button>
 
                     <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-black dark:border-white">
                       <img
@@ -67,6 +61,12 @@ export default function CurrentFront() {
                     <span className="text-xs mt-2 truncate w-full text-center">
                       {member.display_name || member.name}
                     </span>
+                    <button
+                      onClick={() => removeFromFront(member.id)}
+                      className="flex mt-4"
+                    >
+                      Remove
+                    </button>
                   </div>
                 );
               })}

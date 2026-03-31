@@ -48,26 +48,45 @@ setAvatarUrl(resolveAvatar(initialData?.avatar));
 
       try {
         if (avatarFile) {
-          const { path } = await uploadFile(avatarFile, "systems");
+          const { path } = await uploadFile(avatarFile);
           avatarPath = path;
+          form.avatar = path;
         } else if (avatarInput.trim()) {
-          const { path } = await uploadFileFromUrl(avatarInput, "systems");
+          const { path } = await uploadFileFromUrl(avatarInput);
           avatarPath = path;
+          form.avatar = path;
         }
-
-        handleSubmit({
-          ...form,
-          avatar: avatarPath,
-        });
       } catch (err) {
         console.error(err);
       }
   }
 
 
-  const handleSubmit = () => {
-    onSubmit(form);
-  };
+ const handleSubmit = async () => {
+  let avatarPath = form.avatar;
+
+  setUploading(true);
+
+  try {
+    if (avatarFile) {
+      const { path } = await uploadFile(avatarFile);
+      avatarPath = path;
+    } else if (avatarInput.trim()) {
+      const { path } = await uploadFileFromUrl(avatarInput);
+      avatarPath = path;
+    }
+
+    onSubmit({
+      ...form,
+      avatar: avatarPath,
+    });
+  } catch (err) {
+    console.error(err);
+    alert("Avatar upload failed");
+  }
+
+  setUploading(false);
+};
 
   return (
     <div className="space-y-4">
@@ -84,15 +103,23 @@ setAvatarUrl(resolveAvatar(initialData?.avatar));
           <input
             type="file"
             accept="image/*"
-            onChange={handleAvatarUpload}
-            disabled={uploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                setAvatarFile(file);
+                setAvatarUrl(URL.createObjectURL(file));
+              }
+            }}
           /></button>
           <input
-              type="text"
-              placeholder="Or paste image URL..."
-              value={avatarInput}
-              onChange={(e) => setAvatarInput(e.target.value)}
-            />
+            type="text"
+            placeholder="Or paste image URL..."
+            value={avatarInput}
+            onChange={(e) => {
+              setAvatarInput(e.target.value);
+              setAvatarUrl(e.target.value);
+            }}
+          />
         </div>
 
         <input

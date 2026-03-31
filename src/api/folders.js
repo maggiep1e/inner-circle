@@ -16,12 +16,12 @@ export async function getFoldersBySystem(systemId) {
   return data || [];
 }
 
-export async function createFolder({ name, user_id, system_id, member_ids = [] }) {
-  if (!name || !user_id || !system_id || !member_ids) throw new Error("Missing required fields for folder");
+export async function createFolder({ name, user_id, system_id, member_ids = [], emoji, color }) {
+  if (!name || !user_id || !system_id) throw new Error("Missing required fields for folder");
 
   const { data, error } = await supabase
     .from("folders")
-    .insert([{ name, user_id, system_id, member_ids }])
+    .insert([{ name, user_id, system_id, member_ids, emoji, color }])
     .select()
     .single();
 

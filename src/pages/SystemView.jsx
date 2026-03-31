@@ -235,8 +235,10 @@ export default function SystemView() {
 
 
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow p-4">
-        <h2 className="font-semibold mb-3">Folders</h2>
-
+        <div className="flex justify-between">
+          <h2 className="font-semibold mb-3">Folders</h2>
+          <button onClick={() => navigate(`/systems/${currentSystem.id}/folders/new`)}>+ Add Folder</button>
+        </div>
         {folders.map((folder) => {
           const isOpen = activeFolder?.id === folder.id;
 
@@ -250,7 +252,7 @@ export default function SystemView() {
                 onClick={() => openFolder(folder)}
                 className="flex justify-between items-center p-2 cursor-pointer"
               >
-                <span>📁 {folder.name}</span>
+                <span>{folder.emoji} {folder.name}</span>
 
                 <div className="flex gap-2 text-xs">
                   <button
