@@ -18,6 +18,7 @@ export default function MemberForm({
     description: "",
     color: "#3b82f6",
     tags: [],
+    custom_fields: []
   });
 
   const [avatarInput, setAvatarInput] = useState("");
@@ -39,6 +40,7 @@ export default function MemberForm({
       description: initialData.description || "",
       color: initialData.color || "#3b82f6",
       tags: initialData.tags || [],
+      custom_fields: initialData.custom_fields || [],
     });
 
   }, [initialData]);
@@ -110,6 +112,35 @@ export default function MemberForm({
       [name]: value,
     }));
   };
+
+ const handleCustomFieldChange = (index, key, value) => {
+  setForm((prev) => {
+    const updated = [...prev.custom_fields];
+    updated[index] = {
+      ...updated[index],
+      [key]: value,
+    };
+
+    return {
+      ...prev,
+      custom_fields: updated,
+    };
+  });
+};
+
+const addCustomField = () => {
+  setForm((prev) => ({
+    ...prev,
+    custom_fields: [...prev.custom_fields, { title: "", value: "" }],
+  }));
+};
+
+const removeCustomField = (index) => {
+  setForm((prev) => ({
+    ...prev,
+    custom_fields: prev.custom_fields.filter((_, i) => i !== index),
+  }));
+};
 
   const addTag = () => {
     if (!tagInput.trim()) return;
@@ -264,6 +295,46 @@ export default function MemberForm({
                 <button onClick={() => removeTag(tag)}>×</button>
               </span>
             ))}
+          </div>
+
+          <div className="space-y-2">
+            {form.custom_fields?.map((field, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <input
+                  value={field.title}
+                  onChange={(e) =>
+                    handleCustomFieldChange(index, "title", e.target.value)
+                  }
+                  placeholder="Field name"
+                  className="w-1/2 border p-2 rounded"
+                />
+
+                <input
+                  value={field.value}
+                  onChange={(e) =>
+                    handleCustomFieldChange(index, "value", e.target.value)
+                  }
+                  placeholder="Field value"
+                  className="w-1/2 border p-2 rounded"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => removeCustomField(index)}
+                  className="px-2 text-red-500"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addCustomField}
+              className="px-3 py-2 border rounded"
+            >
+              + Add Custom Field
+            </button>
           </div>
 
        </div>

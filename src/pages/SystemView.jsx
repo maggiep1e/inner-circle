@@ -69,8 +69,17 @@ export default function SystemView() {
       const aFront = frontSet.has(a.id);
       const bFront = frontSet.has(b.id);
 
-      if (aFront === bFront) return 0;
-      return aFront ? -1 : 1;
+      if (aFront !== bFront) {
+        return aFront ? -1 : 1;
+      }
+
+      const nameA = (a.display_name || a.name || "").toLowerCase();
+      const nameB = (b.display_name || b.name || "").toLowerCase();
+
+      return nameA.localeCompare(nameB, undefined, {
+        numeric: true,
+        sensitivity: "base",
+      });
     });
   }, [members, currentFront]);
 

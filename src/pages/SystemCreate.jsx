@@ -4,12 +4,14 @@ import { useSystemStore } from "../store/systemStore";
 import { useSessionStore } from "../store/sessionStore";
 import Card from "../components/Card";
 import { uploadFile } from "../api/avatar";
+import { useProfileStore } from "../store/profileStore";
 
 export default function SystemCreate() {
   const navigate = useNavigate();
 
   const addSystem = useSystemStore((s) => s.addSystem);
   const user = useSessionStore((s) => s.user);
+  const setProfile = useProfileStore((s) => s.setProfile)
 
   const [form, setForm] = useState({
     name: "",
@@ -52,6 +54,11 @@ export default function SystemCreate() {
       display_name: form.name,
       created_at: new Date().toISOString(),
     });
+
+    setProfile((prev) => ({
+      ...prev,
+      onboardingStep: "done",
+    }));
   } catch {
       console.error("System Create failed:", err);
   } finally {

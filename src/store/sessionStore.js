@@ -1,9 +1,7 @@
-// src/store/sessionStore.js
 import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 
 export const useSessionStore = create((set, get) => ({
-  // --- State ---
   user: null,
   profile: null,
   profileAvatarUrl: null,
@@ -27,7 +25,7 @@ export const useSessionStore = create((set, get) => ({
   loadSession: async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-      set({ user: null, profile: null, profileAvatarUrl: null, mode: "user" });
+      set({ user: null, profile: null, profileAvatarUrl: null, mode: "user", onboardingStep: 'profile' });
       return null;
     }
 

@@ -83,17 +83,15 @@ export default function MemberView() {
   return (
       <div className="md:p-6 md:w-1/2 space-y-8">
 
-        {/* BACK */}
         <button onClick={() => navigate(-1)}>
           ← Back
         </button>
 
-        {/* HEADER */}
         <h1 className="text-2xl font-bold">
           {member.display_name || member.name}
         </h1>
 
-        {/* ---------------- PROFILE EDIT ---------------- */}
+
         <div className="border p-4 rounded space-y-3">
           <h2 className="font-semibold">Profile</h2>
 
@@ -103,12 +101,12 @@ export default function MemberView() {
           />
         </div>
 
-        {/* ---------------- JOURNAL ---------------- */}
+
         <div className="border p-4 rounded space-y-4">
 
           <h2 className="font-semibold">Journal</h2>
 
-          {/* CREATE ENTRY */}
+
           <div className="space-y-2">
             <input
               placeholder="Title"
@@ -132,7 +130,6 @@ export default function MemberView() {
             </button>
           </div>
 
-          {/* ENTRIES */}
           <div className="space-y-3 mt-4">
             {loading ? (
               <div>Loading...</div>

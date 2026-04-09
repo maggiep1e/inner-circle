@@ -12,6 +12,8 @@ import App from "./App";
 export default function AppGate() {
   const setUser = useSessionStore((s) => s.setUser);
   const user = useSessionStore((s) => s.user);
+  const profile = useProfileStore((s) => s.profile)
+
 
   const loadProfile = useProfileStore((s) => s.loadProfile);
   const setProfile = useProfileStore((s) => s.setProfile);
@@ -79,7 +81,9 @@ export default function AppGate() {
   );
 
   if (loading) return <div>Loading...</div>;
-  if (!user) return <Layout><Auth /></Layout>;
+  
+ if (!user) return <Layout><Auth /></Layout>;
+ if (!profile) return <div>Loading Profile...</div>;
 
   return <Layout><App /></Layout>;
 }

@@ -11,10 +11,24 @@ export function normalizeMember(input, source) {
 }
 
 export function validateMembers(members) {
-  return (members || [])
+  const cleaned = (members || [])
     .filter((m) => m?.name?.trim())
     .map((m) => ({
       ...m,
       display_name: m.display_name || m.name,
     }));
+
+  return sortMembersAlphabetically(cleaned);
 }
+
+const sortMembersAlphabetically = (members) => {
+  return [...members].sort((a, b) => {
+    const nameA = (a.display_name || a.name || "").toLowerCase();
+    const nameB = (b.display_name || b.name || "").toLowerCase();
+
+    return nameA.localeCompare(nameB, undefined, {
+      numeric: true,
+      sensitivity: "base",
+    });
+  });
+};

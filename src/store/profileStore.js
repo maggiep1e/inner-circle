@@ -14,12 +14,14 @@ export const useProfileStore = create((set, get) => ({
   profile: null,
   loading: false,
   profileAvatarUrl: null,
+  onboardingStep: "profile",
 
 
   setProfile: (profile) => {
     set({
       profile,
       profileAvatarUrl: getAvatarUrl(profile?.avatar),
+      onboardingStep: profile?.onboarding_step,
     });
   },
 
@@ -36,6 +38,7 @@ export const useProfileStore = create((set, get) => ({
         set({
           profile: profileData,
           profileAvatarUrl: getAvatarUrl(profileData?.avatar),
+          onboardingStep: profileData?.onboarding_step
         });
       }
     } catch (err) {
@@ -51,13 +54,14 @@ export const useProfileStore = create((set, get) => ({
     if (!userId) throw new Error("User not logged in");
 
     const currentProfile =
-      get().profile || { id: userId, type: "user", owner_id: userId };
+      get().profile || { id: userId, owner_id: userId, onboarding_step: "profile"};
 
     const profileToSave = {
       ...currentProfile,
       ...updates,
       id: userId,
       owner_id: userId,
+      onboarding_step: "done",
     };
 
     try {
@@ -66,6 +70,7 @@ export const useProfileStore = create((set, get) => ({
       set({
         profile: saved,
         profileAvatarUrl: getAvatarUrl(saved?.avatar),
+        onboardingStep: saved?.onboarding_step
       });
 
       return saved;

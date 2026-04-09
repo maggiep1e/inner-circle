@@ -17,24 +17,21 @@ import UserSettings from "./pages/User";
 import ImportMembersPage from "./pages/ImportMembersPage";
 import Auth from "./pages/auth";
 import { Navigate } from "react-router-dom";
+import UserSettingsPage from "./pages/User";
+import { useProfileStore } from "./store/profileStore";
 
 export default function App() {
   const user = useSessionStore((s) => s.user);
-  const mode = useSessionStore((s) => s.mode);
+  const profile = useProfileStore((s) => s.profile)
+  const onboardingStep = useProfileStore((s)=> s.onboardingStep)
 
- if (user === null || mode === null) return <div>Loading...</div>;
+ if (user === null) return <div>Loading...</div>;
   if (!user) return <Auth />;
+  if (!profile) return <UserSettingsPage />;
+  if (onboardingStep === "profile") return <UserSettingsPage />
 
   return (
-    <Routes>
-      {mode === "singlet" ? (
-          <>
-            <Route path="/" element={<Navigate to="/friends" />} />
-            <Route path="/friends" element={<Friends />} />
-            <Route path="/user" element={<UserSettings />} />
-            <Route path="*" element={<Navigate to="/friends" />} />
-          </>
-        ) : (
+    <Routes> 
           <>
             <Route path="/" element={<SystemsPage />} />
             <Route path="/friends" element={<Friends />} />
@@ -46,10 +43,9 @@ export default function App() {
             <Route  path="/systems/:systemId/folders/:folderId/edit"  element={<EditFolder />}/>
             <Route  path="/systems/:systemId/journal"  element={<SystemJournal />}/>
             <Route path="/import/:systemId" element={<ImportMembersPage />} />
-            <Route path="/user" element={<UserSettings />} />
+            <Route path="/user" element={<UserSettingsPage />} />
             <Route path="*" element={<Navigate to="/" />} />
           </>
-        )}
     </Routes>
   );
 }

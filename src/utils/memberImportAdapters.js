@@ -1,6 +1,7 @@
 
 import * as XLSX from "xlsx";
 import { uploadFileFromUrl } from "../api/avatar";
+import { normalizeMember, validateMembers } from "./memberAdapters"
 
 async function normalizeAvatar(url) {
   if (!url) return null;
@@ -23,7 +24,6 @@ function normalizeColor(c) {
 
   if (c.startsWith("#")) return c;
 
-  // Excel hex without #
   if (/^[0-9A-Fa-f]{6}$/.test(c)) return `#${c}`;
 
   return "#3b82f6";
@@ -41,20 +41,22 @@ export async function importFromExcel(file) {
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
         const json = XLSX.utils.sheet_to_json(sheet);
 
-        const members = json.map((row) => ({
-          source: "excel",
+        const members = json.map((row) =>
+          normalizeMember(
+            {
+              name: row.name || row.Name || "Unnamed",
+              display_name:
+                row.displayName || row["Display Name"] || row.name,
+              color: normalizeColor(row.color),
+              description: row.description || null,
+              pronouns: row.pronouns || null,
+              avatar: row.avatar || row.avatar_url || null,
+            },
+            "excel"
+          )
+        );
 
-          name: row.name || row.Name || "Unnamed",
-          display_name: row.displayName || row["Display Name"] || row.name,
-
-          color: normalizeColor(row.color),
-          description: row.description || null,
-          pronouns: row.pronouns || null,
-
-          avatar_raw: row.avatar || row.avatar_url || null,
-        }));
-
-        resolve(members);
+        resolve(validateMembers(members));
       } catch (err) {
         reject(err);
       }
@@ -86,16 +88,104 @@ export async function importFromPluralKit(token) {
 
   const members = await membersRes.json();
 
-  return members.map((m) => ({
-    source: "pluralkit",
+  const normalized = members.map((m) =>
+    normalizeMember(
+      {
+        name: m.name,
+        display_name: m.display_name || m.name,
+        color: normalizeColor(m.color),
+        description: m.description ?? null,
+        pronouns: m.pronouns ?? null,
+        avatar: m.avatar_url || null,
+      },
+      "pluralkit"
+    )
+  );
 
-    name: m.name,
-    display_name: m.display_name || m.name,
+  return validateMembers(normalized);
+}
 
-    color: normalizeColor(m.color),
-    description: m.description ?? null,
-    pronouns: m.pronouns ?? null,
 
-    avatar_raw: m.avatar_url || null,
-  }));
+
+export async function importFromJson(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        const data = JSON.parse(text);
+
+        const rows = Array.isArray(data) ? data : data.members || [];
+
+        const members = rows.map((row) =>
+          normalizeMember(
+            {
+              name: row.name || row.Name || "Unnamed",
+              display_name:
+                row.display_name ||
+                row.displayName ||
+                row["Display Name"] ||
+                row.name,
+              color: normalizeColor(row.color),
+              description: row.description || row.desc || null,
+              pronouns: row.pronouns || null,
+              avatar:
+                row.avatar ||
+                row.avatar_url ||
+                row.avatarUrl ||
+                null,
+            },
+            "json"
+          )
+        );
+
+        resolve(validateMembers(members));
+      } catch (err) {
+        reject(err);
+      }
+    };
+
+    reader.onerror = reject;
+    reader.readAsText(file);
+  });
+}
+
+export async function importFromSimplyPlural(token, systemId) {
+  if (!token) throw new Error("Missing SimplyPlural token");
+
+  const res = await fetch(
+    `https://api.apparyllis.com/v1/members/${systemId}`,
+    {
+      headers: {
+        Authorization: token,
+      },
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch SimplyPlural members");
+  }
+
+  const data = await res.json();
+
+  const members = Array.isArray(data) ? data : data.members || [];
+
+  const normalized = members.map((m) => {
+    const c = m.content || {};
+
+    return normalizeMember(
+      {
+        id: m.id,
+        name: c.name,
+        color: normalizeColor(c.color),
+        description: c.desc || null,
+        pronouns: c.pronouns || null,
+        avatar: c.avatarUrl || null,
+      },
+      "simplyplural"
+    );
+  });
+
+  return validateMembers(normalized);
 }

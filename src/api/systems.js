@@ -47,6 +47,11 @@ export async function createSystem(data) {
     .select()
     .single();
 
+    await supabase
+    .from("profiles")
+    .update({ onboardingStep: "done" })
+    .eq("id", data.user_id);
+
   if (error) throw error;
 
   return created;

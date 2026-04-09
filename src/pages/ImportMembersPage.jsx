@@ -3,6 +3,8 @@ import { useSystemStore } from "../store/systemStore";
 import {
   importFromExcel,
   importFromPluralKit,
+  importFromJson,
+  importFromSimplyPlural
 } from "../utils/memberImportAdapters";
 import {
   createImportJob,
@@ -41,6 +43,7 @@ export default function ImportMembersPage() {
   const [source, setSource] = useState("");
   const [file, setFile] = useState(null);
   const [apiKey, setApiKey] = useState("");
+  const [SimplyPluralId, setSimplyPluralId] = useState("")
 
   const [rawMembers, setRawMembers] = useState([]);
   const [selected, setSelected] = useState({});
@@ -64,14 +67,23 @@ export default function ImportMembersPage() {
         members = await importFromExcel(file);
       }
 
+      if (source === "json") {
+        members = await importFromJson(file);
+      }
+
       if (source === "pluralkit") {
         members = await importFromPluralKit(apiKey);
+      }
+
+      if (source === "simplyplural") {
+        members = await importFromSimplyPlural(apiKey, SimplyPluralId);
       }
 
       const fuse = createMemberMatcher(existingMembers);
 
       const initialSelected = {};
       const initialDecisions = {};
+
 
       members.forEach((m, i) => {
         const query = normalize(m.display_name || m.name);
@@ -85,7 +97,7 @@ export default function ImportMembersPage() {
           : { type: "add", match: null };
       });
 
-      setRawMembers(members);
+      setRawMembers(members)
       setSelected(initialSelected);
       setDecisions(initialDecisions);
 
@@ -234,12 +246,31 @@ export default function ImportMembersPage() {
             onChange={(e) => setSource(e.target.value)}
           >
             <option value="">Select Source</option>
+            <option value="pluralkit">PluralKit Token</option>
+            <option value="simplyplural">SimplyPlural Token</option>
+            <option value="json">JSON (or SimplyPlural file)</option>
             <option value="excel">Excel / CSV</option>
-            <option value="pluralkit">PluralKit</option>
           </select>
 
-          {source === "excel" && (
-            <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+          {(source === "excel" || source === "json") && (
+            <input type="file" accept={source === "json" ? ".json" : ".xlsx,.csv"} onChange={(e) => setFile(e.target.files[0])} />
+          )}
+
+          {source === "simplyplural" && (
+            <div>
+            <input
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="API Token"
+              className="border p-2 rounded w-full"
+            />
+            <input 
+              value={SimplyPluralId}
+              onChange={(e) => setSimplyPluralId(e.target.value)}
+              placeholder="User/System Id"
+              className="border p-2 rounded w-full"
+            />
+            </div>
           )}
 
           {source === "pluralkit" && (

@@ -15,8 +15,7 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [logon, setLogon] = useState("login");
   const [error, setError] = useState("");
-  const [mode, setMode] = useState("system");
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   async function handleSubmit() {
     setError("");
@@ -24,7 +23,6 @@ export default function Auth() {
       if (logon === "login") {
         await signIn(email, password);
       } else {
-        // Register
         await signUp(email, password);
 
         const { data: { session } } = await supabase.auth.getSession();
@@ -35,16 +33,15 @@ export default function Auth() {
           return;
         }
 
-        // Create profile if not exists
         const existingProfile = await getProfiles("user", user.id);
         if (!existingProfile) {
           await createProfile({
-            id: user.id, // PK = auth user id
+            id: user.id, 
             type: "user",
             owner_id: user.id,
             email,
-            mode,
             plan: "free",
+            onboarding_step: "profile"
           });
         }
       }
@@ -70,8 +67,8 @@ export default function Auth() {
           type: "user",
           owner_id: user.id,
           email: user.email,
-          mode: "system",
           plan: "free",
+          onboarding_step: "profile"
         });
       }
     } catch (err) {
@@ -100,41 +97,6 @@ export default function Auth() {
             onChange={(e) => setPassword(e.target.value)}
             className="border-4 border-black dark:border-zinc-600 rounded-2xl px-3 py-2 bg-white dark:bg-zinc-700"
           />
-
-          {logon === "register" && (
-            <div className="flex flex-col gap-2">
-              <span className="text-sm opacity-70">Account Type</span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setMode("system")}
-                  className={`flex-1 py-2 rounded-xl border ${
-                    mode === "system"
-                      ? "bg-purple-600 text-white"
-                      : "bg-zinc-200 dark:bg-zinc-700"
-                  }`}
-                >
-                  System
-                </button>
-
-                <button
-                  onClick={() => setMode("singlet")}
-                  className={`flex-1 py-2 rounded-xl border ${
-                    mode === "singlet"
-                      ? "bg-blue-600 text-white"
-                      : "bg-zinc-200 dark:bg-zinc-700"
-                  }`}
-                >
-                  Singlet
-                </button>
-              </div>
-
-              <div className="text-xs opacity-60">
-                {mode === "system"
-                  ? "Full app: members, fronting, folders"
-                  : "Social only: friends + profile"}
-              </div>
-            </div>
-          )}
 
           {error && <div className="text-red-500 text-sm">{error}</div>}
 

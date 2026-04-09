@@ -7,19 +7,18 @@ export default function UserSettingsPage() {
   const saveProfile = useProfileStore((s) => s.saveProfile);
   const uploadAvatar = useProfileStore((s) => s.uploadAvatar);
 
-
+  const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [description, setDescription] = useState("");
   const [color, setColor] = useState("");
-  const [plan, setPlan] = useState("free");
 
   useEffect(() => {
     if (!profile) return;
 
+    setUsername(profile.username || "")
     setDisplayName(profile.display_name || "");
     setDescription(profile.description || "");
     setColor(profile.color || "");
-    setPlan(profile.plan || "free");
   }, [profile]);
 
   if (!profile) {
@@ -55,6 +54,13 @@ export default function UserSettingsPage() {
 
         <div className="space-y-4">
 
+           <input
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
+            className="w-full p-2 border rounded"
+          />
+
           <input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
@@ -69,19 +75,13 @@ export default function UserSettingsPage() {
             className="w-full p-2 border rounded"
           />
 
+          <div>
+          <p>Colour: </p>
           <input
             type="color"
             value={color}
             onChange={(e) => setColor(e.target.value)}
-          />
-
-          <select
-            value={plan}
-            onChange={(e) => setPlan(e.target.value)}
-            className="w-full p-2 border rounded"
-          >
-            <option value="free">Free</option>
-          </select>
+          /></div>
 
         </div>
 
@@ -93,7 +93,7 @@ export default function UserSettingsPage() {
                 display_name: displayName,
                 description,
                 color,
-                plan,
+                username
               })
             }
             className="px-4 py-2 bg-blue-500 text-white rounded"
