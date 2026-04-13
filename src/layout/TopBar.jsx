@@ -130,8 +130,8 @@ export default function TopBar() {
             { user &&                
             <button
               onClick={() => {
-                logout();
                 navigate("/auth"); 
+                logout();
                 setMenuOpen(false);
               }}
               className="text-left px-3 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition"
