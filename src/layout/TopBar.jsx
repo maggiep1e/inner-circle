@@ -64,7 +64,11 @@ export default function TopBar() {
 
             {user && (
               <button
-                onClick={logout}
+                onClick={() => {
+                navigate("/auth"); 
+                logout();
+                setMenuOpen(false);
+              }}
                 className="px-3 py-1 rounded bg-red-500 text-white hover:bg-red-600 transition"
               >
                 Logout
