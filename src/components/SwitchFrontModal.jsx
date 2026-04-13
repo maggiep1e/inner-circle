@@ -30,7 +30,6 @@ export default function SwitchFrontModal({ onClose }) {
       setSelected(ids);
       setInitialFront(ids);
     }
-
     load();
   }, [systemId]);
 

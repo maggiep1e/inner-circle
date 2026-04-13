@@ -158,7 +158,7 @@ export default function CurrentFront() {
         </div>
       </Card>
 
-      {open && systemId && (
+      {open && (
         <div
           onClick={() => setOpen(false)}
           className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
