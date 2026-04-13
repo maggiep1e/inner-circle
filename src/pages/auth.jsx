@@ -15,7 +15,6 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [logon, setLogon] = useState("login");
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
   async function handleSubmit() {
     setError("");

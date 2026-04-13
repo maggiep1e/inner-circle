@@ -7,8 +7,9 @@ import { getPublicUrl, resolveAvatar } from "../api/avatar";
 
 import CurrentFront from "../components/CurrentFront";
 import Card from "../components/Card";
+import SelectSystem from "../components/SelectSystem";
 
-export default function SystemsPage() {
+export default function Dashboard() {
   const navigate = useNavigate();
 
   const systems = useSystemStore((s) => s.systems);
@@ -17,6 +18,7 @@ export default function SystemsPage() {
   const ensureCurrentSystem = useSystemStore((s) => s.ensureCurrentSystem);
   const profile = useProfileStore((s) => s.profile);
   const userId = useSessionStore((s) => s.userId);
+  const currentSystem = useSystemStore((s)=> s.currentSystem)
 
   useEffect(() => {
     if (!userId) return;
@@ -39,57 +41,12 @@ export default function SystemsPage() {
   };
 
   return (
-    <div className="flex flex-wrap md:flex-nowrap gap-6 p-4">
+   <div className="flex justify-center p-4 w-full justify-center">
+    <div className="flex flex-wrap gap-6 max-w-7xl w-full ">
 
       <CurrentFront />
 
-      <div className="w-84 space-y-3">
-        <Card>
-          <h2 className="text-xl font-bold p-2">Systems</h2>
-
-          {systems?.map((sys) => {
-
-            return (
-              <div
-                key={sys.id}
-                onClick={() => selectSystem(sys.id)}
-                className="p-3 rounded cursor-pointer shadow-sm hover:opacity-90 transition flex flex-col gap-2"
-                style={{ backgroundColor: sys.color || "#ffffff" }}
-              >
-  
-                <div className="flex items-center gap-3">
-                  <img
-                    src={resolveAvatar(sys?.avatar)}
-                    alt="system avatar"
-                    className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-zinc-900"
-                  />
-
-                  <div className="font-semibold text-sm">
-                    {sys.name || "Unnamed System"}
-                  </div>
-                </div>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/systems/${sys.id}/journal`);
-                  }}
-                  className="text-xs underline text-left"
-                >
-                  System Journal
-                </button>
-              </div>
-            );
-          })}
-
-          <button
-            onClick={() => navigate("/systems/new")}
-            className="mt-3 w-full bg-green-500 text-white px-3 py-2 rounded"
-          >
-            + Create System
-          </button>
-        </Card>
-      </div>
+        <SelectSystem onSelect={selectSystem}/>
 
       <Card>
         <h2 className="text-xl font-bold p-2">Settings</h2>
@@ -104,6 +61,16 @@ export default function SystemsPage() {
           className="w-24 h-24 rounded-full object-cover shadow cursor-pointer"
         />
       </Card>
+      <Card>
+        <h2>Features</h2>
+        <button className="mr-4 my-4" onClick={() => navigate('/medicaltracking')}>
+          Medical Tracking
+        </button>
+        <button className="mr-4 my-4" onClick={() => navigate('/polls')}>
+          Polls
+        </button>
+      </Card>
+    </div>
     </div>
   );
 }

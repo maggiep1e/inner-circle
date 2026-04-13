@@ -41,27 +41,6 @@ setAvatarUrl(resolveAvatar(initialData?.avatar));
     }));
   };
 
- async function handleAvatarUpload(e) {
-      e.preventDefault();
-
-      let avatarPath = form.avatar;
-
-      try {
-        if (avatarFile) {
-          const { path } = await uploadFile(avatarFile);
-          avatarPath = path;
-          form.avatar = path;
-        } else if (avatarInput.trim()) {
-          const { path } = await uploadFileFromUrl(avatarInput);
-          avatarPath = path;
-          form.avatar = path;
-        }
-      } catch (err) {
-        console.error(err);
-      }
-  }
-
-
  const handleSubmit = async () => {
   let avatarPath = form.avatar;
 

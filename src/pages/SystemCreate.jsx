@@ -1,23 +1,24 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useSystemStore } from "../store/systemStore";
 import { useSessionStore } from "../store/sessionStore";
 import Card from "../components/Card";
 import { uploadFile } from "../api/avatar";
-import { useProfileStore } from "../store/profileStore";
 
 export default function SystemCreate() {
   const navigate = useNavigate();
+  const { id: parentId} = useParams();
 
   const addSystem = useSystemStore((s) => s.addSystem);
+  const addSubsystem = useSystemStore((s) => s.addSubsystem);
   const user = useSessionStore((s) => s.user);
-  const setProfile = useProfileStore((s) => s.setProfile)
 
   const [form, setForm] = useState({
     name: "",
     description: "",
     color: "#ffffff",
-    avatar: ""
+    avatar: "",
+    parent_system_id: parentId || null,
   });
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -33,10 +34,10 @@ export default function SystemCreate() {
 
       setForm((prev) => ({
         ...prev,
-        avatar: path, // 🔥 store DB path
+        avatar: path,
       }));
 
-      setAvatarPreview(url); // 🔥 instant UI preview
+      setAvatarPreview(url);
     } catch (err) {
       console.error("Avatar upload failed:", err);
     } finally {
@@ -47,6 +48,22 @@ export default function SystemCreate() {
   const handleCreate = async () => {
     if (!user?.id) return;
  
+    if (parentId) { try {
+      const created = await addSubsystem({
+        ...form,
+        user_id: user.id,
+        display_name: form.name,
+        parent_system_id: parentId,
+        created_at: new Date().toISOString(),
+      });
+
+      navigate('/systems/' + created.id);
+    
+    } catch (err) {
+      console.error("Subsystem Create failed:", err);
+    
+    }} else {
+
     try {
     const created = await addSystem({
       ...form,
@@ -55,20 +72,16 @@ export default function SystemCreate() {
       created_at: new Date().toISOString(),
     });
 
-    setProfile((prev) => ({
-      ...prev,
-      onboardingStep: "done",
-    }));
-  } catch {
+    navigate('/systems/' + created.id);
+    } catch  (err)  {
       console.error("System Create failed:", err);
-  } finally {
-
-    navigate(`/`);}
+  }
   };
+};
 
   return (
     <>
-    <button onClick={() => navigate("/systems")}>
+    <button onClick={() => navigate("/dashboard")} className="mb-4">
                 ← Back
       </button>
     <Card>

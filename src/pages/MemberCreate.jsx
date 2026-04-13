@@ -16,11 +16,15 @@ export default function MemberCreate() {
     name: "",
     display_name: "",
     pronouns: "",
+    description: "",
     avatar: "",
-    color: ""
+    color: "",
+    tags: [],
+    custom_fields: []
   });
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+   const [tagInput, setTagInput] = useState("");
 
 
  const handleAvatarChange = async (e) => {
@@ -44,6 +48,55 @@ export default function MemberCreate() {
       setUploading(false);
     }
   };
+
+   const handleCustomFieldChange = (index, key, value) => {
+  setForm((prev) => {
+    const updated = [...prev.custom_fields];
+    updated[index] = {
+      ...updated[index],
+      [key]: value,
+    };
+
+    return {
+      ...prev,
+      custom_fields: updated,
+    };
+  });
+};
+
+const addCustomField = () => {
+  setForm((prev) => ({
+    ...prev,
+    custom_fields: [...prev.custom_fields, { title: "", value: "" }],
+  }));
+};
+
+const removeCustomField = (index) => {
+  setForm((prev) => ({
+    ...prev,
+    custom_fields: prev?.custom_fields?.filter((_, i) => i !== index),
+  }));
+};
+
+
+  const addTag = () => {
+    if (!tagInput.trim()) return;
+
+    setForm((prev) => ({
+      ...prev,
+      tags: [...new Set([...prev.tags, tagInput.trim()])],
+    }));
+
+    setTagInput("");
+  };
+
+  const removeTag = (tag) => {
+    setForm((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((t) => t !== tag),
+    }));
+  };
+
 
   const handleCreate = async () => {
     if (!user?.id || !systemId) return;
@@ -115,6 +168,15 @@ export default function MemberCreate() {
           className="p-2 w-full border rounded"
         />
 
+        <textarea
+          placeholder="Description"
+          value={form.description}
+          onChange={(e) =>
+            setForm({ ...form, description: e.target.value })
+          }
+          className="p-2 w-full border rounded"
+        />
+
                <div>
           <p className="text-zinc-400 text-sm mb-1">Color</p>
           <input
@@ -125,6 +187,75 @@ export default function MemberCreate() {
             }
           />
         </div>
+
+          <div className="flex gap-2">
+            <input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              placeholder="Add tag..."
+              className="border p-2 rounded w-full"
+            />
+
+            <button
+              type="button"
+              onClick={addTag}
+              className="px-3 py-2 border rounded"
+            >
+              Add
+            </button>
+          </div>
+                    <div className="flex flex-wrap gap-2">
+            {form.tags.map((tag) => (
+              <span
+                key={tag}
+                className="px-2 py-1 border rounded text-sm flex items-center gap-2"
+              >
+                {tag}
+                <button onClick={() => removeTag(tag)}>×</button>
+              </span>
+            ))}
+          </div>
+
+         <div className="space-y-2">
+            {form.custom_fields && form.custom_fields?.map((field, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <input
+                  value={field.title}
+                  onChange={(e) =>
+                    handleCustomFieldChange(index, "title", e.target.value)
+                  }
+                  placeholder="Field name"
+                  className="w-1/2 border p-2 rounded"
+                />
+
+                <input
+                  value={field.value}
+                  onChange={(e) =>
+                    handleCustomFieldChange(index, "value", e.target.value)
+                  }
+                  placeholder="Field value"
+                  className="w-1/2 border p-2 rounded"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => removeCustomField(index)}
+                  className="px-2 text-red-500"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addCustomField}
+              className="px-3 py-2 border rounded"
+            >
+              + Add Custom Field
+            </button>
+          </div>
+
 
         <button
           className="w-full bg-blue-500 text-white p-2 rounded"

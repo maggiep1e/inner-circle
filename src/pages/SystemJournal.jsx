@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useSessionStore } from "../store/sessionStore";
 import { createSystemJournal, getSystemJournals } from "../api/journals";
+import Card from "../components/Card";
+import { useNavigate } from "react-router-dom";
 
 export default function SystemJournal() {
   const { systemId } = useParams();
+  const navigate = useNavigate();
 
   const user = useSessionStore((s) => s.user);
 
@@ -60,23 +63,27 @@ export default function SystemJournal() {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="p-4 md:p-8 lg:p-12 space-y-6">
+
+        <button onClick={() => navigate(-1)}>
+          ← Back
+        </button>
 
       <h1 className="text-2xl font-bold">System Journal</h1>
 
-      <div className="space-y-2 border p-4 rounded bg-white dark:bg-zinc-900">
+      <Card>
         <input
           placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="border p-2 rounded w-full"
+          className="border p-2 rounded w-full my-4"
         />
 
         <textarea
           placeholder="Write entry..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="border p-2 rounded w-full h-32"
+          className="border p-2 rounded w-full h-32 mb-4"
         />
 
         <button
@@ -88,7 +95,7 @@ export default function SystemJournal() {
         >
           {saving ? "Saving..." : "Save Entry"}
         </button>
-      </div>
+      </Card>
 
       <div className="space-y-2">
         <h2 className="text-xl font-semibold">Previous Entries</h2>

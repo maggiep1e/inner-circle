@@ -2,31 +2,64 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSystemStore } from "../store/systemStore";
 import { supabase } from "../lib/supabase";
-import { getPublicUrl } from "../api/avatar";
+import { removeFromFront, addToFront } from "../api/front";
+import RemoveCustomFront from "../components/RemoveCustomFront";
 
 import SystemForm from "../components/SystemForm";
 import SearchBar from "../components/SearchBar";
 import { getMembersByFolder, deleteFolder } from "../api/folders";
 import { resolveAvatar } from "../api/avatar";
+import { useSessionStore } from "../store/sessionStore";
+
+function SystemNode({ system, onNavigate }) {
+  return (
+    <div className="ml-4 mt-2">
+      <div
+        className="border rounded p-2 cursor-pointer"
+        style={{ backgroundColor: system.color }}
+        onClick={() => onNavigate(system)}
+      >
+        {system.name}
+      </div>
+
+      {system.children?.length > 0 && (
+        <div className="ml-4">
+          {system.children.map((child) => (
+            <SystemNode
+              key={child.id}
+              system={child}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 export default function SystemView() {
   const navigate = useNavigate();
   const { id: systemIdParam } = useParams();
 
   const systems = useSystemStore((s) => s.systems);
+  const user = useSessionStore((s) => s.user);
   const currentSystem = useSystemStore((s) => s.currentSystem);
   const members = useSystemStore((s) => s.members);
   const folders = useSystemStore((s) => s.systemFolders);
   const currentFront = useSystemStore((s) => s.currentFront);
   const hydrateSystem = useSystemStore((s) => s.hydrateSystem);
-  const loadMembers = useSystemStore((s) => s.loadMembers);
   const loadFolders = useSystemStore((s) => s.loadFolders);
   const updateSystem = useSystemStore((s) => s.updateSystem);
   const deleteSystem = useSystemStore((s) => s.deleteSystem);
+  const loadFront = useSystemStore((s) => s.loadCurrentFront);
 
   const [edit, setEdit] = useState(false);
   const [activeFolder, setActiveFolder] = useState(null);
   const [folderMembers, setFolderMembers] = useState({});
+    const [memberToRemove, setMemberToRemove] = useState(null);
+
+  const subsystems = currentSystem?.children || [];
 
 
   useEffect(() => {
@@ -39,23 +72,10 @@ export default function SystemView() {
 
     if (currentSystem?.id !== targetId) {
       hydrateSystem(targetId);
+      loadFront(targetId);
     }
   }, [systemIdParam, systems, currentSystem?.id, hydrateSystem]);
 
-  const toggleFront = async (id) => {
-    if (!currentSystem?.id) return;
-
-    const current = Array.isArray(currentFront) ? currentFront : [];
-
-    const updated = current.includes(id)
-      ? current.filter((x) => x !== id)
-      : [...current, id];
-
-    await useSystemStore.getState().setFront(
-      currentSystem.id,
-      updated
-    );
-  };
 
   const systemAvatar = useMemo(() => {
     if (!currentSystem?.avatar) return "/default-avatar.png";
@@ -83,9 +103,30 @@ export default function SystemView() {
     });
   }, [members, currentFront]);
 
+
   const currentFolderMemberIds = new Set(
     (folderMembers[activeFolder?.id] || []).map((m) => m.id)
   );
+
+  const removeFromFrontList = async (memberId) => {
+    await removeFromFront(memberId);
+
+    hydrateSystem(currentSystem.id);
+  }
+
+    const addToFrontList = async (memberId) => {
+    await addToFront(currentSystem.id, memberId, user?.id);
+
+    hydrateSystem(currentSystem.id);
+  }
+
+  const handleOpenRemove = (member) => {
+    setMemberToRemove(member);
+  };
+
+  const handleCloseRemove = () => {
+    setMemberToRemove(null);
+  };
 
 
   const openFolder = async (folder) => {
@@ -188,7 +229,7 @@ export default function SystemView() {
     <div className="p-6 space-y-6">
 
       <div className="flex gap-2">
-        <button onClick={() => navigate("/systems")}>
+        <button onClick={() => navigate("/dashboard")}>
           ← Back
         </button>
 
@@ -199,6 +240,22 @@ export default function SystemView() {
           className="text-xs border rounded px-2 py-1"
         >
           Import
+        </button>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/systems/${currentSystem.id}/journal`);
+          }}
+          className="text-xs text-left"
+        >
+          System Journal
+        </button>
+        <button
+        onClick={(e) => {          e.stopPropagation();
+          navigate(`/systems/${currentSystem.id}/subsystems/new`);
+        }}>
+          Add Subsystem
         </button>
       </div>
 
@@ -241,6 +298,24 @@ export default function SystemView() {
           </button>
         </div>
         </div>
+
+      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow p-4">
+        <div className="flex justify-between">
+          <h2 className="font-semibold mb-3">Subsystems</h2>
+          <button onClick={() => navigate(`/systems/${currentSystem.id}/subsystems/new`)} className="mb-4">+ Add Subsystem</button>
+            </div>
+            {subsystems.map((system) => (
+              <SystemNode
+                key={system.id}
+                system={system}
+                onNavigate={(s) =>
+                  navigate(`/systems/${s.id}`)
+                }
+              />
+            ))}
+      </div>
+
+
 
 
       <div className="bg-white dark:bg-zinc-900 rounded-xl shadow p-4">
@@ -341,8 +416,7 @@ export default function SystemView() {
 
         <div className="mt-3 space-y-2">
           {sortedMembers.map((m) => {
-            const isFront = (currentFront || []).includes(m.id);
-
+            const isFront = m.is_fronting === true;
             return (
               <div
                 key={m.id}
@@ -372,7 +446,7 @@ export default function SystemView() {
 
                     {isFront && (
                       <span className="ml-2 text-xs text-green-500">
-                        • fronting
+                        • Fronting
                       </span>
                     )}
                   </span>
@@ -380,15 +454,27 @@ export default function SystemView() {
 
 
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFront(m.id);
-                  }}
-                  className="text-xs border px-2 py-1 rounded"
-                >
-                  {isFront ? "Remove from Front" : "Add to Front"}
-                </button>
+                 {isFront ? (
+                  <button
+                    onClick={() => {
+                      if (m.is_temporary) {
+                        handleOpenRemove(m);
+                      } else {
+                        removeFromFrontList(m.id);
+                      }}
+                    }
+                    className="text-xs border px-2 py-1 rounded"
+                  >
+                    Remove from Front
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => addToFrontList(m.id)}
+                    className="text-xs border px-2 py-1 rounded"
+                  >
+                    Add to Front
+                  </button>
+                )}
               </div>
             );
           })}
@@ -410,6 +496,27 @@ export default function SystemView() {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+          {memberToRemove && (
+        <div
+          onClick={handleCloseRemove}
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        >
+          <div onClick={(e) => e.stopPropagation()}>
+            <RemoveCustomFront
+              member={memberToRemove}
+              systemId={currentSystem.id}
+              onClose={handleCloseRemove}
+              onRemoved={(id) => {
+                loadFront(currentSystem.id);
+                setMemberToRemove(null);
+                removeFromFrontList(id);
+                hydrateSystem(currentSystem.id);
+              }}
+            />
           </div>
         </div>
       )}

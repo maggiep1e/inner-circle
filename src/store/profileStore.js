@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { supabase } from "../lib/supabase";
 import { getProfiles, updateProfile } from "../api/profiles";
 import { useSessionStore } from "./sessionStore";
+import { createMedicalEntry, getMedicalEntriesByUser } from "../api/medical";
 
 function getAvatarUrl(path) {
   if (!path) return "/default-avatar.png";
@@ -104,5 +105,32 @@ export const useProfileStore = create((set, get) => ({
 
   setProfileAvatarUrl: (url) => {
     set({ profileAvatarUrl: url });
+  },
+
+  createMedicalEntry: async (medicalInfo) => {
+    const userId = useSessionStore.getState().user?.id;
+    if (!userId) throw new Error("User not logged in");
+    try {
+      const created = await createMedicalEntry({
+        ...medicalInfo,
+        user_id: userId,
+      });
+      return created;
+    } catch (err) {
+      console.error("Failed to create medical entry:", err);
+      throw err;
+    }
+  },
+
+  getMedicalEntries: async () => {
+    const userId = useSessionStore.getState().user?.id;
+    if (!userId) throw new Error("User not logged in");
+    try {
+      const entries = await getMedicalEntriesByUser(userId);
+      return entries;
+    } catch (err) {
+      console.error("Failed to fetch medical entries:", err);
+      throw err;
+    } 
   },
 }));

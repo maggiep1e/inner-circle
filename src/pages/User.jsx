@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useProfileStore } from "../store/profileStore";
+import Card from "../components/Card";
 
 export default function UserSettingsPage() {
   const profile = useProfileStore((s) => s.profile);
@@ -34,14 +35,16 @@ export default function UserSettingsPage() {
 
       <h1 className="text-3xl font-bold mb-6">User Settings</h1>
 
-      <div className="max-w-3xl mx-auto bg-white dark:bg-gray-800 p-6 rounded-2xl space-y-6">
+      <div className="flex justify-center">
+
+     <Card>
 
         <div className="flex flex-col items-center gap-3">
           <img
             src={profileAvatarUrl}
             className="w-32 h-32 rounded-full object-cover"
           />
-          <button className="w-1/2">
+          <button className="w-1/2 mt-2 mb-4">
           <input
             type="file"
             accept="image/*"
@@ -101,8 +104,9 @@ export default function UserSettingsPage() {
             Save
           </button>
         </div>
+      </Card>
+</div>
 
       </div>
-    </div>
   );
 }

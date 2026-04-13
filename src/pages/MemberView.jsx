@@ -4,6 +4,7 @@ import { useSystemStore } from "../store/systemStore";
 import MemberForm from "../components/MemberForm";
 
 import { createMemberJournal, searchMemberJournal } from "../api/journals";
+import Card from "../components/Card";
 
 export default function MemberView() {
   const { systemId, memberId } = useParams();
@@ -92,17 +93,17 @@ export default function MemberView() {
         </h1>
 
 
-        <div className="border p-4 rounded space-y-3">
+        <Card>
           <h2 className="font-semibold">Profile</h2>
 
           <MemberForm
             initialData={member}
             onSubmit={handleSave}
           />
-        </div>
+        </Card>
 
 
-        <div className="border p-4 rounded space-y-4">
+        <Card>
 
           <h2 className="font-semibold">Journal</h2>
 
@@ -147,7 +148,7 @@ export default function MemberView() {
             )}
           </div>
 
-        </div>
+        </Card>
 
       </div>
   );
